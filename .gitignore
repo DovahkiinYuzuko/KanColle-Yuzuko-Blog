@@ -4,4 +4,5 @@
 # ---AUTO-Generated---
 # .gitignores/2026_summer.gitignore
 !2026_summer/
-!2026_summer/**
+!2026_summer/E1/
+!2026_summer/E1/**
