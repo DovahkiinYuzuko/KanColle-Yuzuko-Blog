@@ -56,4 +56,4 @@
 > [!TIP]
 > 2. 索敵値について
 > 大手攻略サイトに大体記載されています。重要なのは、みすみす見逃して羅針盤を逸らし愚かにも資源と艦娘のやる気と時間を虚空の彼方に投げ捨てないようにすることです。指差し確認を徹底しましょう。
-> 計算は" <img src="./images/search.svg" width="16" height="16" alt="search" /> 艦これ 索敵値 "で計算すればいくらでもツールが出てくるのでそれを使ってください。
+> 計算は" <img src="https://raw.githubusercontent.com/primer/octicons/main/icons/search-16.svg" width="16" height="16" alt="search" /> 艦これ 索敵値 艦これ 索敵値 "で計算すればいくらでもツールが出てくるのでそれを使ってください。
