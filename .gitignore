@@ -1,0 +1,7 @@
+# project:艦これ
+*
+!.gitignore
+# ---AUTO-Generated---
+# .gitignores/2026_summer.gitignore
+!2026_summer/
+!2026_summer/**
