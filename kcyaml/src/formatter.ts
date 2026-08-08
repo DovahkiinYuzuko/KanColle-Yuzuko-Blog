@@ -47,7 +47,6 @@ export function buildMarkdownOutput(parsedData: ParsedData, options: CliOptions)
   }
 
   if (parsedData.airBases.length > 0) {
-    lines.push('- **基地航空隊:**');
     lines.push('```yaml');
     lines.push(`${finalAirTitle}:`);
 
