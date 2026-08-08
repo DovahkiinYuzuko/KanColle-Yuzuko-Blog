@@ -6,7 +6,6 @@
 ![Node.js](https://img.shields.io/badge/Node.js-%3E%3D18-green?style=flat-square&logo=nodedotjs&logoColor=white)
 ![Bun](https://img.shields.io/badge/Bun-Supported-black?style=flat-square&logo=bun&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=flat-square&logo=typescript&logoColor=white)
-![OS](https://img.shields.io/badge/OS-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey?style=flat-square)
 
 [日本語](#日本語) | [English](#english)
 
@@ -15,6 +14,10 @@
 ## 日本語
 
 `kcyaml` は、「艦隊これくしょん -艦これ-」の各種編成シミュレーター（制空権シミュレーター、Deck Builder 等）から出力された JSON データを読み込み、Markdown 形式の YAML コードブロックおよび 256 色軽量化 PNG 編成画像へ変換・保存するコマンドラインツールです。
+
+> [!NOTE]
+> 本ツールは **Windows 11** 環境にて開発および動作検証を実施しています。
+> macOS および Linux 環境につきましてもクロスプラットフォーム対応の設計を行っておりますが、開発環境の制約上、実機での動作検証は未実施（動作未確認）となっております。
 
 ### 主な機能
 
@@ -34,13 +37,13 @@
 
 ### 動作環境・動作要件
 
-- **ランタイム**: Node.js v18.0.0 以上 (または Bun 環境)
-- **対応OS**: Windows 11 / 10、macOS、Linux
+- **開発・検証環境**: Windows 11
+- **対応ランタイム**: Node.js v18.0.0 以上 (または Bun 環境)
 - **必要ブラウザ (編成画像生成機能 `-g` 利用時)**:
   - 画像生成エンジン (`puppeteer-core`) の制御仕様上、以下のいずれかの Chromium 系ブラウザが OS にインストールされている必要があります。
-    - **macOS**: Google Chrome、Brave、Arc、Vivaldi、Microsoft Edge、Opera、または Chromium
     - **Windows**: Google Chrome、Microsoft Edge、Brave、Vivaldi、または Opera
-    - **Linux**: Google Chrome、Brave、Chromium、Vivaldi、または Microsoft Edge
+    - **macOS (動作未確認)**: Google Chrome、Brave、Arc、Vivaldi、Microsoft Edge、Opera、または Chromium
+    - **Linux (動作未確認)**: Google Chrome、Brave、Chromium、Vivaldi、または Microsoft Edge
   - ※ Safari および Firefox は CDP (Chrome DevTools Protocol) 非対応のため、画像自動生成エンジンの制御対象外となります。
 
 ### インストール・実行方法 (リポジトリのクローン不要)
@@ -165,6 +168,10 @@ kcyaml --init-config
 
 `kcyaml` is a command-line tool designed to parse Deck Builder format JSON data exported from Kantai Collection (KanColle) fleet simulators, converting it into Markdown YAML codeblocks and 256-color optimized PNG fleet organization images.
 
+> [!NOTE]
+> This tool is developed and verified primarily on **Windows 11**.
+> While the architecture is designed to support cross-platform execution for macOS and Linux, actual testing on non-Windows platforms has not been performed due to hardware availability.
+
 ### Key Features
 
 - **Deck Builder JSON Parsing & YAML Conversion**:
@@ -183,13 +190,13 @@ kcyaml --init-config
 
 ### System Requirements
 
-- **Runtime**: Node.js v18.0.0 or higher (or Bun environment)
-- **Supported OS**: Windows 11 / 10, macOS, Linux
+- **Development & Tested OS**: Windows 11
+- **Supported Runtime**: Node.js v18.0.0 or higher (or Bun environment)
 - **Required Browsers (for image generation `-g`)**:
   - Due to automation engine (`puppeteer-core`) specifications, one of the following Chromium-based browsers must be installed on your OS:
-    - **macOS**: Google Chrome, Brave, Arc, Vivaldi, Microsoft Edge, Opera, or Chromium
     - **Windows**: Google Chrome, Microsoft Edge, Brave, Vivaldi, or Opera
-    - **Linux**: Google Chrome, Brave, Chromium, Vivaldi, or Microsoft Edge
+    - **macOS (Unverified)**: Google Chrome, Brave, Arc, Vivaldi, Microsoft Edge, Opera, or Chromium
+    - **Linux (Unverified)**: Google Chrome, Brave, Chromium, Vivaldi, or Microsoft Edge
   - *Note: Safari and Firefox are not supported for automated image generation as they do not support CDP (Chrome DevTools Protocol).*
 
 ### Installation & Execution (No Repository Cloning Required)
