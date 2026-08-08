@@ -43,21 +43,16 @@
     - **Linux**: Google Chrome、Brave、Chromium、Vivaldi、または Microsoft Edge
   - ※ Safari および Firefox は CDP (Chrome DevTools Protocol) 非対応のため、画像自動生成エンジンの制御対象外となります。
 
-### インストール方法
+### インストール・実行方法 (リポジトリのクローン不要)
 
-#### 方法 A: ネット経由でのワンライナー直接インストール
+リポジトリ全体をクローンすることなく、`npm` コマンド一発で直接インストールして `kcyaml` コマンドを利用できます。
+
+#### グローバルインストール
 ```bash
 npm install -g https://gitpkg.vercel.app/DovahkiinYuzuko/KanColle-Yuzuko-Blog/kcyaml?main
 ```
 
-#### 方法 B: リポジトリのクローンによるインストール
-```bash
-git clone https://github.com/DovahkiinYuzuko/KanColle-Yuzuko-Blog.git
-cd KanColle-Yuzuko-Blog/kcyaml
-npm install
-npm run build
-npm link
-```
+インストール完了後、端末から `kcyaml` コマンドがそのまま利用可能になります。
 
 ---
 
@@ -197,21 +192,16 @@ kcyaml --init-config
     - **Linux**: Google Chrome, Brave, Chromium, Vivaldi, or Microsoft Edge
   - *Note: Safari and Firefox are not supported for automated image generation as they do not support CDP (Chrome DevTools Protocol).*
 
-### Installation
+### Installation & Execution (No Repository Cloning Required)
 
-#### Method A: Direct One-Liner Global Installation via Network
+You can directly install and run `kcyaml` with a single `npm` command without cloning the entire repository.
+
+#### Global Installation
 ```bash
 npm install -g https://gitpkg.vercel.app/DovahkiinYuzuko/KanColle-Yuzuko-Blog/kcyaml?main
 ```
 
-#### Method B: Installation via Repository Clone
-```bash
-git clone https://github.com/DovahkiinYuzuko/KanColle-Yuzuko-Blog.git
-cd KanColle-Yuzuko-Blog/kcyaml
-npm install
-npm run build
-npm link
-```
+Once installed, the `kcyaml` command will be globally available in your terminal.
 
 ---
 
@@ -306,7 +296,7 @@ You can adjust fine-grained runtime behavior in `config.json` at the project roo
     level: 173
     equipments:
       - 20.3cm(2号)連装砲☆5
-      - 20.3cm(3号)连装砲☆2
+      - 20.3cm(3号)連装砲☆2
       - 42号対空電探
       - 零式水上観測機
       - 三式弾
