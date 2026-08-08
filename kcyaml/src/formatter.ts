@@ -24,7 +24,7 @@ export function buildMarkdownOutput(parsedData: ParsedData, options: CliOptions)
 
   if (parsedData.fleets.length > 0) {
     for (const fleet of parsedData.fleets) {
-      lines.push(`- **第${fleet.number}艦隊:**`);
+      lines.push(`- **第${fleet.number}艦隊:**\n`);
       lines.push('```yaml');
       lines.push(`${finalFleetTitle}:`);
 

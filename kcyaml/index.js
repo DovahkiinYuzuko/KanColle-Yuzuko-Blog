@@ -7,11 +7,22 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+function checkBunVersion() {
+  try {
+    const res = spawnSync('bun', ['-v'], { encoding: 'utf-8', shell: true });
+    if (res.status === 0 && res.stdout && res.stdout.trim().length > 0) {
+      return res.stdout.trim();
+    }
+  } catch {}
+  return null;
+}
+
 async function main() {
   const isBun = Boolean(process.versions.bun);
 
   if (!isBun && !process.env.KCYAML_SPAWNED) {
-    try {
+    const bunVersion = checkBunVersion();
+    if (bunVersion) {
       const res = spawnSync('bun', [__filename, ...process.argv.slice(2)], {
         stdio: 'inherit',
         shell: true,
@@ -20,7 +31,7 @@ async function main() {
       if (res.status === 0) {
         process.exit(0);
       }
-    } catch {}
+    }
   }
 
   const distPath = path.join(__dirname, 'dist', 'cli.js');
