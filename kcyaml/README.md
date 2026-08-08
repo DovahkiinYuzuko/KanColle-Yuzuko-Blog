@@ -4,7 +4,9 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square&logo=opensourceinitiative&logoColor=white)](LICENSE.MIT)
 ![Node.js](https://img.shields.io/badge/Node.js-%3E%3D18-green?style=flat-square&logo=nodedotjs&logoColor=white)
+![Bun](https://img.shields.io/badge/Bun-Supported-black?style=flat-square&logo=bun&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=flat-square&logo=typescript&logoColor=white)
+![OS](https://img.shields.io/badge/OS-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey?style=flat-square)
 
 [日本語](#日本語) | [English](#english)
 
@@ -12,62 +14,101 @@
 
 ## 日本語
 
-`kcyaml` は、艦隊これくしょん -艦これ- の各種編成シミュレーター等で出力される Deck Builder 形式の JSON データをパースし、Markdown 形式の YAML コードブロックおよび 256 色軽量化 PNG 画像へ変換・出力する CLI ツールです。
+`kcyaml` は、「艦隊これくしょん -艦これ-」の各種編成シミュレーター（制空権シミュレーター、Deck Builder 等）から出力された JSON データを読み込み、Markdown 形式の YAML コードブロックおよび 256 色軽量化 PNG 編成画像へ変換・保存するコマンドラインツールです。
 
 ### 主な機能
 
-- **Deck Builder JSON の自動変換**: クリップボードまたはローカルの JSON ファイルから艦隊・基地航空隊の編成情報をパースし、Markdown YAML 形式で出力します。
-- **編成画像の自動生成 (`-g`)**: OS にインストールされている標準ブラウザ（Google Chrome または Microsoft Edge）を自動探知してバックグラウンド制御し、制空権シミュレーター等と完全互換のある高品質な編成画像（PNG）を生成します。
-- **256色軽量化・圧縮**: 生成された画像はカラーパレット化および不要メタデータの削除が行われ、超軽量 PNG として保存されます。
-- **OS標準保存ダイアログの呼び出し**: 保存先の選択時に、Windows/macOS/Linux のネイティブエクスプローラーダイアログを自動起動して指定可能です。
-- **外部設定ファイル (`config.json`) サポート**: アセット取得 URL、デバッグログの制御、デフォルトテーマなどを外部ファイルで管理できます。
+- **Deck Builder JSON のパースおよび YAML 変換**:
+  - クリップボードまたは指定した JSON ファイルから艦隊（第1〜第4艦隊）および基地航空隊（第1〜第3基地）の情報を解析します。
+  - 艦娘のレベル・装備・補強増設スロット・装備改修値（`☆N`）を保持したまま、視認性の高い Markdown 構造へ整形します。（※熟練度 `mas` は自動除外されます）
+- **システムブラウザ自動探知による編成画像生成 (`-g`)**:
+  - 重い Chromium の事前ダウンロードを行わず、OS 内にインストールされている標準ブラウザ（Google Chrome、Microsoft Edge、Brave 等）を自動検出してバックグラウンド制御します。
+  - 制空権シミュレーターと完全に互換性のあるデザインテーマ (`official`, `dark`, `light`, `74lc` 等) で画像を即時描画します。
+- **256色カラーパレット量子化および超軽量化**:
+  - 生成された PNG 画像は `sharp` ライブラリによって 256 色パレット化およびメタデータ除去が行われ、高画質なままファイルサイズを大幅に削減します。
+- **OS標準ファイル保存ダイアログの起動**:
+  - 保存先の選択時に、OS（Windows: エクスプローラー / macOS: Finder / Linux: GTKダイアログ）のネイティブ保存ダイアログを表示して保存場所を指定できます。
+- **外部設定ファイル (`config.json`) と自動フォールバック保護**:
+  - リモートアセットの取得 URL やログ表示設定を外部ファイルでカスタマイズ可能です。
+  - アセット通信に障害が発生した場合は、自動的に安全なデフォルト設定へ切り替えて再描画を試みる自動フォールバック機能を備えています。
 
-### 動作要件
+### 動作環境・動作要件
 
-- Node.js v18 以上 (または Bun)
-- OS にインストール済みの Google Chrome または Microsoft Edge (画像生成機能利用時)
+- **ランタイム**: Node.js v18.0.0 以上 (または Bun 環境)
+- **対応OS**: Windows 11 / 10、macOS、Linux
+- **必要ブラウザ (編成画像生成機能 `-g` 利用時)**:
+  - 以下のいずれかのブラウザが OS にインストールされている必要があります。
+    - **Windows**: Microsoft Edge または Google Chrome
+    - **macOS**: Google Chrome、Microsoft Edge、または Brave
+    - **Linux**: Chromium または Google Chrome
 
 ### インストール方法
 
 ```bash
+# リポジトリのクローンとビルド
+git clone https://github.com/DovahkiinYuzuko/KanColle-Yuzuko-Blog.git
+cd kcyaml
 npm install
 npm run build
+
+# グローバルコマンドとして登録
 npm link
 ```
 
-### 使用方法
+---
 
-#### クリップボードからの変換
-クリップボードに Deck Builder 形式の JSON をコピーした状態で以下を実行します。
+### 使用方法とコマンド例
+
+#### 1. クリップボードからの変換 (標準実行)
+Web上のシミュレーターで「Deck Builder形式でコピー」を実行した後、以下を入力します。
 
 ```bash
 kcyaml -f 1 2
 ```
 
-#### JSON ファイルからの変換および編成画像の同時生成
+#### 2. JSON ファイル入力と編成画像(PNG)の同時生成
 ```bash
-kcyaml -f 1 2 -i input.json -g -o
+kcyaml -f 1 2 -i 例.json -g -o
 ```
 
-#### コマンドラインオプション一覧
+#### 3. ダイアログをスキップして自動保存
+```bash
+kcyaml -f 1 2 -i 例.json -g --no-dialog -o
+```
 
-| オプション | 説明 | デフォルト値 |
-| :--- | :--- | :--- |
-| `-f, --fleet <numbers...>` | 変換対象の艦隊番号 (例: `-f 1 2`) | `1` |
-| `-a, --air <numbers...>` | 変換対象の基地航空隊番号 (例: `-a 1 2`) | なし |
-| `-t, --title <string>` | YAML 内の親キータイトル名 | なし |
-| `-i, --input <path>` | 入力 JSON ファイルのパス (未指定時はクリップボード) | クリップボード |
-| `-o, --output [path]` | テキスト出力ファイルパス (引数なしの場合は自動保存) | なし |
-| `-g, --image` | 編成画像 (PNG) を自動出力する | `false` |
-| `--image-theme <theme>` | 編成画像の表示テーマ (`official`, `dark`, `light`, `74lc` 等) | `official` |
-| `--no-dialog` | OS エクスプローラー保存ダイアログの表示をスキップする | `false` |
-| `--init-config` | デフォルトの `config.json` をプロジェクトルートに生成する | `false` |
-| `-r, --refresh` | マスタデータをリモートから強制再取得・更新する | `false` |
-| `--validate` | 入力データの整合性・未知の ID チェックを実行する | `false` |
+#### 4. デフォルト設定ファイル `config.json` の生成
+```bash
+kcyaml --init-config
+```
 
-### 設定ファイル (`config.json`)
+---
 
-`kcyaml --init-config` を実行することで、設定ファイルのテンプレートをプロジェクトルートに作成できます。
+### コマンドラインオプション詳細
+
+| オプション | 短縮 | 型 | デフォルト値 | 説明 |
+| :--- | :--- | :--- | :--- | :--- |
+| `--fleet <numbers...>` | `-f` | numbers | `1` | 変換対象の艦隊番号 (例: `-f 1 2 3`) |
+| `--air <numbers...>` | `-a` | numbers | なし | 変換対象の基地航空隊番号 (例: `-a 1 2`) |
+| `--title <string>` | `-t` | string | なし | YAML構造の親キータイトル名 |
+| `--fleet-title <string>` | `--ft` | string | なし | 艦隊専用の親キータイトル名 |
+| `--air-title <string>` | `--at` | string | なし | 基地航空隊専用の親キータイトル名 |
+| `--input <path>` | `-i` | path | クリップボード | 入力 JSON ファイルのパス |
+| `--output [path]` | `-o` | path | なし | テキスト保存先 (引数なし時は自動保存フォルダへ保存) |
+| `--image` | `-g` | flag | `false` | 編成画像 (PNG) を自動出力する |
+| `--image-theme <theme>` | なし | string | `official` | 画像表示テーマ (`official`, `dark`, `light`, `74lc` 等) |
+| `--image-output <path>` | なし | path | なし | 生成画像の保存先ファイルパス指定 |
+| `--no-dialog` | なし | flag | `false` | OS のファイルエクスプローラー保存ダイアログ表示をスキップする |
+| `--init-config` | なし | flag | `false` | デフォルトの `config.json` テンプレートをプロジェクトルートに初期生成する |
+| `--config <path>` | なし | path | なし | カスタム `config.json` 設定ファイルのパス指定 |
+| `--dry-run` | なし | flag | `false` | クリップボードへの書き込みを行わず標準出力へのみ出力する |
+| `-r, --refresh` | `-r` | flag | `false` | 艦娘・装備マスタデータをリモートから強制再取得・更新する |
+| `--validate` | なし | flag | `false` | 入力データの構造整合性および未知の ID チェックを実行する |
+
+---
+
+### 設定ファイル (`config.json`) の仕様
+
+プロジェクトルート直下の `config.json` で詳細な動作設定を調整できます。
 
 ```json
 {
@@ -93,6 +134,27 @@ kcyaml -f 1 2 -i input.json -g -o
   }
 }
 ```
+
+---
+
+### 出力フォーマット例
+
+#### YAML 出力例
+```yaml
+- **第1艦隊:**
+```yaml
+艦隊:
+  - name: 羽黒改二
+    level: 173
+    equipments:
+      - 20.3cm(2号)連装砲☆5
+      - 20.3cm(3号)連装砲☆2
+      - 42号対空電探
+      - 零式水上観測機
+      - 三式弾
+```
+
+---
 
 ### LICENSE
 
@@ -102,62 +164,101 @@ kcyaml -f 1 2 -i input.json -g -o
 
 ## English
 
-`kcyaml` is a CLI tool designed to parse Deck Builder format JSON data exported from Kantai Collection (KanColle) fleet simulators, converting it into Markdown YAML codeblocks and 256-color optimized PNG fleet organization images.
+`kcyaml` is a command-line tool designed to parse Deck Builder format JSON data exported from Kantai Collection (KanColle) fleet simulators, converting it into Markdown YAML codeblocks and 256-color optimized PNG fleet organization images.
 
-### Features
+### Key Features
 
-- **Automated Deck Builder JSON Conversion**: Parses fleet and land-based air base organization data from either the system clipboard or local JSON files into Markdown YAML format.
-- **Fleet Image Generation (`-g`)**: Automatically detects and controls system browsers (Google Chrome or Microsoft Edge) in headless mode to render high-quality fleet composition images fully compatible with simulators.
-- **256-Color Palette Quantization**: Generated images undergo color palette quantization and metadata stripping, producing ultra-lightweight PNG files.
-- **Native OS Save File Dialog**: Automatically launches Windows/macOS/Linux native file explorer save dialogs when selecting output file paths.
-- **External Configuration (`config.json`) Support**: Manages asset URLs, debug logging toggles, and default themes through an external configuration file.
+- **Deck Builder JSON Parsing & YAML Conversion**:
+  - Parses fleet (Fleets 1 to 4) and land-based air base (Bases 1 to 3) data from either the system clipboard or local JSON files.
+  - Formats output into clean Markdown structures while preserving ship levels, equipment, expansion slots, and equipment improvement levels (`☆N`). (Note: Aircraft proficiency `mas` is automatically excluded).
+- **Fleet Image Generation via System Browser Detection (`-g`)**:
+  - Automatically detects and controls system browsers (Google Chrome, Microsoft Edge, Brave, etc.) installed on the OS in headless mode without downloading extra Chromium binaries.
+  - Instantly renders high-quality fleet composition images using themes fully compatible with simulators (`official`, `dark`, `light`, `74lc`, etc.).
+- **256-Color Palette Quantization & Optimization**:
+  - Generated PNG images are processed via `sharp` for 256-color palette quantization and metadata stripping, significantly reducing file sizes while maintaining visual quality.
+- **Native OS File Save Dialog**:
+  - Displays native OS file explorer save dialogs (Windows Explorer / macOS Finder / Linux GTK) when selecting output file paths.
+- **External Configuration (`config.json`) & Automatic Fallback Protection**:
+  - Customizes remote asset URLs, debug logging toggles, and default themes.
+  - Includes an automatic fallback mechanism that switches to safe default rendering parameters if remote asset retrieval fails or times out.
 
-### Requirements
+### System Requirements
 
-- Node.js v18 or higher (or Bun)
-- Google Chrome or Microsoft Edge installed on the OS (required for image generation)
+- **Runtime**: Node.js v18.0.0 or higher (or Bun environment)
+- **Supported OS**: Windows 11 / 10, macOS, Linux
+- **Required Browsers (for image generation `-g`)**:
+  - One of the following browsers must be installed on your OS:
+    - **Windows**: Microsoft Edge or Google Chrome
+    - **macOS**: Google Chrome, Microsoft Edge, or Brave
+    - **Linux**: Chromium or Google Chrome
 
 ### Installation
 
 ```bash
+# Clone repository and build
+git clone https://github.com/DovahkiinYuzuko/KanColle-Yuzuko-Blog.git
+cd kcyaml
 npm install
 npm run build
+
+# Link globally
 npm link
 ```
 
-### Usage
+---
 
-#### Converting from Clipboard
-Copy Deck Builder format JSON to your clipboard and run:
+### Usage & Command Examples
+
+#### 1. Conversion from Clipboard (Standard Execution)
+Copy Deck Builder JSON from your web simulator, then run:
 
 ```bash
 kcyaml -f 1 2
 ```
 
-#### Converting from JSON File with Image Output
+#### 2. Conversion from JSON File with Image (PNG) Generation
 ```bash
 kcyaml -f 1 2 -i input.json -g -o
 ```
 
-#### Command Line Options
+#### 3. Skip Save Dialog and Auto-Save
+```bash
+kcyaml -f 1 2 -i input.json -g --no-dialog -o
+```
 
-| Option | Description | Default |
-| :--- | :--- | :--- |
-| `-f, --fleet <numbers...>` | Fleet numbers to convert (e.g., `-f 1 2`) | `1` |
-| `-a, --air <numbers...>` | Land-based air base numbers to convert (e.g., `-a 1 2`) | None |
-| `-t, --title <string>` | Title string for the parent key in YAML | None |
-| `-i, --input <path>` | Input JSON file path (reads from clipboard if omitted) | Clipboard |
-| `-o, --output [path]` | Text output file path (auto-saves if specified without argument) | None |
-| `-g, --image` | Generate fleet composition images (PNG) | `false` |
-| `--image-theme <theme>` | Fleet image display theme (`official`, `dark`, `light`, `74lc`, etc.) | `official` |
-| `--no-dialog` | Skip native OS file explorer save dialog | `false` |
-| `--init-config` | Initialize default `config.json` in the project root | `false` |
-| `-r, --refresh` | Force refetch and update master data from remote source | `false` |
-| `--validate` | Perform data integrity and unknown ID validation | `false` |
+#### 4. Generate Default Configuration (`config.json`)
+```bash
+kcyaml --init-config
+```
 
-### Configuration File (`config.json`)
+---
 
-Run `kcyaml --init-config` to generate a default configuration file template in the project root.
+### Command Line Options Details
+
+| Option | Short | Type | Default | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `--fleet <numbers...>` | `-f` | numbers | `1` | Fleet numbers to convert (e.g., `-f 1 2 3`) |
+| `--air <numbers...>` | `-a` | numbers | None | Land-based air base numbers to convert (e.g., `-a 1 2`) |
+| `--title <string>` | `-t` | string | None | Parent key title name in YAML structure |
+| `--fleet-title <string>` | `--ft` | string | None | Fleet-specific parent key title name |
+| `--air-title <string>` | `--at` | string | None | Air base-specific parent key title name |
+| `--input <path>` | `-i` | path | Clipboard | Input JSON file path |
+| `--output [path]` | `-o` | path | None | Text output file path (auto-saves if specified without value) |
+| `--image` | `-g` | flag | `false` | Generate fleet composition images (PNG) |
+| `--image-theme <theme>` | None | string | `official` | Display theme (`official`, `dark`, `light`, `74lc`, etc.) |
+| `--image-output <path>` | None | path | None | File path specification for output image |
+| `--no-dialog` | None | flag | `false` | Skip native OS file explorer save dialog |
+| `--init-config` | None | flag | `false` | Initialize default `config.json` template in project root |
+| `--config <path>` | None | path | None | Custom `config.json` file path specification |
+| `--dry-run` | None | flag | `false` | Output to stdout only without writing to clipboard |
+| `-r, --refresh` | `-r` | flag | `false` | Force refetch and update master data from remote repository |
+| `--validate` | None | flag | `false` | Perform data structure integrity and unknown ID validation |
+
+---
+
+### Configuration File (`config.json`) Specifications
+
+You can adjust fine-grained runtime behavior in `config.json` at the project root.
 
 ```json
 {
@@ -183,6 +284,27 @@ Run `kcyaml --init-config` to generate a default configuration file template in 
   }
 }
 ```
+
+---
+
+### Output Format Example
+
+#### YAML Output Example
+```yaml
+- **第1艦隊:**
+```yaml
+艦隊:
+  - name: 羽黒改二
+    level: 173
+    equipments:
+      - 20.3cm(2号)連装砲☆5
+      - 20.3cm(3号)連装砲☆2
+      - 42号対空電探
+      - 零式水上観測機
+      - 三式弾
+```
+
+---
 
 ### LICENSE
 
