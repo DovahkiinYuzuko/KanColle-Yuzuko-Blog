@@ -20,6 +20,17 @@ function sendOsNotification(title: string, message: string): void {
   } catch {}
 }
 
+function getFormattedTimestamp(): string {
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+  const hh = String(now.getHours()).padStart(2, '0');
+  const min = String(now.getMinutes()).padStart(2, '0');
+  const ss = String(now.getSeconds()).padStart(2, '0');
+  return `${yyyy}${mm}${dd}_${hh}${min}${ss}`;
+}
+
 export async function runCli(argv: string[]): Promise<void> {
   const program = new Command();
 
@@ -33,7 +44,7 @@ export async function runCli(argv: string[]): Promise<void> {
     .option('--ft, --fleet-title <string>', '艦隊専用のタイトル名')
     .option('--at, --air-title <string>', '基地航空隊専用のタイトル名')
     .option('-i, --input <path>', '入力JSONファイルパス (未指定時はクリップボードから取得)')
-    .option('-o, --output <path>', '出力ファイルパス (.yaml/.yml 指定時は純粋YAMLで保存)')
+    .option('-o, --output [path]', '出力ファイルパス (引数なしの場合は kcdata-output/ に自動保存)')
     .option('--dry-run', 'クリップボード書き込みを行わずstdout出力のみ', false)
     .option('-r, --refresh', 'マスタデータをリモートから強制再取得・更新する', false)
     .option('--validate', '入力データの整合性・未知のIDチェックを実行する', false);
@@ -107,17 +118,36 @@ export async function runCli(argv: string[]): Promise<void> {
     const parsedData = parseDeckBuilder(inputText, options, masterData);
     const markdownResult = buildMarkdownOutput(parsedData, options);
 
-    let outputContent = markdownResult;
-    if (options.output) {
-      const ext = path.extname(options.output).toLowerCase();
-      if (ext === '.yaml' || ext === '.yml') {
-        outputContent = buildYamlOutput(parsedData, options);
+    if (options.output !== undefined) {
+      let targetPath = '';
+      let isPureYaml = false;
+
+      if (options.output === true || options.output === '') {
+        const dirPath = path.join(process.cwd(), 'kcdata-output');
+        if (!fs.existsSync(dirPath)) {
+          fs.mkdirSync(dirPath, { recursive: true });
+        }
+        const titleName = options.title || options.fleetTitle || 'kcyaml_output';
+        const sanitizedTitle = titleName.replace(/[\\/:*?"<>|]/g, '_');
+        const filename = `${sanitizedTitle}_${getFormattedTimestamp()}.yaml`;
+        targetPath = path.join(dirPath, filename);
+        isPureYaml = true;
+      } else if (typeof options.output === 'string') {
+        targetPath = options.output;
+        const ext = path.extname(targetPath).toLowerCase();
+        if (ext === '.yaml' || ext === '.yml') {
+          isPureYaml = true;
+        }
       }
-      try {
-        fs.writeFileSync(options.output, outputContent, 'utf-8');
-        console.error(`\n(ファイル '${options.output}' に保存しました)`);
-      } catch (err: any) {
-        console.error(`エラー: ファイル '${options.output}' への保存に失敗しました: ${err.message}`);
+
+      if (targetPath) {
+        const outputContent = isPureYaml ? buildYamlOutput(parsedData, options) : markdownResult;
+        try {
+          fs.writeFileSync(targetPath, outputContent, 'utf-8');
+          console.error(`\n(ファイル '${targetPath}' に保存しました)`);
+        } catch (err: any) {
+          console.error(`エラー: ファイル '${targetPath}' への保存に失敗しました: ${err.message}`);
+        }
       }
     }
 

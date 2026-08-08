@@ -67,7 +67,7 @@ export interface CliOptions {
   fleetTitle?: string;
   airTitle?: string;
   input?: string;
-  output?: string;
+  output?: string | boolean;
   dryRun?: boolean;
   refresh?: boolean;
   validate?: boolean;
