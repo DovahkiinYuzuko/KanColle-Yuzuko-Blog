@@ -1,4 +1,4 @@
-# kcyaml (艦これDeck Builder JSON to Markdown YAML Converter) / kcyaml
+# kcyaml
 
 艦これのDeck Builder形式JSONをMarkdown YAMLおよび編成画像に変換するCLIツール / CLI tool for converting KanColle Deck Builder format JSON into Markdown YAML and fleet images
 
