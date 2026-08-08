@@ -15,10 +15,10 @@ imports:
 
 ## Variables and Functions
 
-### `hasBun`
-* **Type:** `boolean`
-* **Description:** システム環境変数 `PATH` 内に `bun` が利用可能かを示す判定フラグ。
+### `isBunAvailable`
+* **Type:** `function`
+* **Description:** システム環境変数 `PATH` 内に `bun` が利用可能かを示す判定関数。
 
-### `launch`
+### `main`
 * **Type:** `function`
 * **Description:** 実行環境に応じて `bun` または `node` で CLI モジュールを読み込み実行する。

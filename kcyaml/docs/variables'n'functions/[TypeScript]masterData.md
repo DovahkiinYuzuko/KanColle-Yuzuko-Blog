@@ -1,7 +1,7 @@
 ---
 source_file: "kcyaml/src/masterData.ts"
 language: "TypeScript"
-description: "Fetches ships.json and items.json with 1.5s timeout and manages local disk cache."
+description: "Fetches START2.json with 1.5s timeout and manages local disk cache."
 tags: [@KcYamlMasterData]
 exports:
   - `loadMasterData`
@@ -12,18 +12,30 @@ imports:
 # Specification: `masterData.ts`
 
 ## Overview
-`masterData.ts` はリモートの `ships.json` / `items.json` を短時間タイムアウト（1.5秒）付きで取得し、キャッシュの維持および読み込みを行う。
+`masterData.ts` はリモートの `START2.json` を短時間タイムアウト（1.5秒）付きで取得し、キャッシュの維持および読み込みを行う。
 
 ## Variables and Functions
 
-### `loadMasterData` (L81-101)
+### `loadMasterData`
 * **Type:** `function`
 * **Description:** マスタデータを読み込む。1.5秒タイムアウト付きでリモート取得を試み、成功時はキャッシュ更新、失敗・タイムアウト時はローカルキャッシュを返却する。
 
-### `fetchWithTimeout` (L11-23)
+### `fetchWithTimeout`
 * **Type:** `function`
 * **Description:** 指定されたミリ秒で AbortSignal を発生させて HTTP fetch を行うヘルパー関数。
 
-### `getCachePath`
+### `ensureCacheDir`
 * **Type:** `function`
-* **Description:** OSの一時ディレクトリ（`os.tmpdir()`）またはキャッシュフォルダ内の該当ファイルパスを返す。
+* **Description:** キャッシュ用ディレクトリが存在しない場合に作成する。
+
+### `readCache`
+* **Type:** `function`
+* **Description:** ローカルキャッシュファイルを読み込む。
+
+### `writeCache`
+* **Type:** `function`
+* **Description:** データオブジェクトをローカルキャッシュファイルに書き込む。
+
+### `buildMasterMaps`
+* **Type:** `function`
+* **Description:** 取得した `START2.json` から艦娘ID・装備IDのマッピング辞書オブジェクトを構築する。

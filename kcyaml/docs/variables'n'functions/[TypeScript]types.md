@@ -20,10 +20,10 @@ imports: []
 
 ## Variables and Functions
 
-### `DeckBuilderData` (L35-39)
+### `DeckBuilderData`
 * **Type:** `interface`
 * **Description:** Deck Builder JSON形式のルートデータインターフェース。
 
-### `CliOptions` (L63-72)
+### `CliOptions`
 * **Type:** `interface`
 * **Description:** CLI コマンド引数・オプションのインターフェース。

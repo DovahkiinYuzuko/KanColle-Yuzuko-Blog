@@ -16,10 +16,10 @@ imports:
 
 ## Variables and Functions
 
-### `parseDeckBuilder` (L30-129)
+### `parseDeckBuilder`
 * **Type:** `function`
 * **Description:** Deck Builder JSON文字列および指定されたオプション番号に応じて変換後のオブジェクト表現を生成する。
 
-### `formatEquipmentName`
+### `formatItemName`
 * **Type:** `function`
 * **Description:** 装備IDから名称を取得し、改修値 `rf >= 1` の場合に `☆N` を結合する。

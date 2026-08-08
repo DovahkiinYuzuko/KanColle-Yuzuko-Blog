@@ -19,10 +19,6 @@ imports:
 
 ## Variables and Functions
 
-### `runCli` (L9-92)
+### `runCli`
 * **Type:** `function`
 * **Description:** CLI処理のメインエントリーポイント。引数を解析して変換・出力のパイプラインを実行する。
-
-### `getInputText`
-* **Type:** `function`
-* **Description:** オプション `-i` のファイルパス、または指定がない場合はクリップボードから JSON テキストを取得する。
