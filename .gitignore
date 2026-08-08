@@ -2,6 +2,10 @@
 *
 !.gitignore
 # ---AUTO-Generated---
+# .gitignores/.github.gitignore
+!.github/
+!.github/workflows/
+!.github/workflows/**
 # .gitignores/2026_summer.gitignore
 !README.md
 
@@ -19,6 +23,7 @@
 
 !kcyaml/index.js
 !kcyaml/package.json
+!kcyaml/package-lock.json
 !kcyaml/tsconfig.json
 
 !kcyaml/docs/
