@@ -46,16 +46,23 @@
     - **Linux (動作未確認)**: Google Chrome、Brave、Chromium、Vivaldi、または Microsoft Edge
   - ※ Safari および Firefox は CDP (Chrome DevTools Protocol) 非対応のため、画像自動生成エンジンの制御対象外となります。
 
-### インストール・実行方法 (リポジトリのクローン不要)
+### インストール・実行方法
 
-リポジトリ全体をクローンすることなく、`npm` コマンド一発で直接インストールして `kcyaml` コマンドを利用できます。
+> [!WARNING]
+> 本ツールはブログコンテンツと同一リポジトリで管理されているため、`npm install` によるサブディレクトリ単体のインストールは対応していません。
+> [GitHub Releases](https://github.com/DovahkiinYuzuko/KanColle-Yuzuko-Blog/releases) から zip をダウンロードして利用してください。
 
-#### グローバルインストール
+1. [Releases ページ](https://github.com/DovahkiinYuzuko/KanColle-Yuzuko-Blog/releases) から最新の `kcyaml-vX.X.X.zip` をダウンロードします。
+2. zip を任意のフォルダに解凍します。
+3. 解凍したフォルダ内でターミナルを開き、以下を実行します。
+
 ```bash
-npm install -g https://gitpkg.vercel.app/DovahkiinYuzuko/KanColle-Yuzuko-Blog/kcyaml?main
+npm install
+npm run build
+npm link
 ```
 
-インストール完了後、端末から `kcyaml` コマンドがそのまま利用可能になります。
+4. インストール完了後、`kcyaml` コマンドがグローバルに利用可能になります。
 
 ---
 
@@ -87,24 +94,24 @@ kcyaml --init-config
 
 ### コマンドラインオプション詳細
 
-| オプション | 短縮 | 型 | デフォルト値 | 説明 |
-| :--- | :--- | :--- | :--- | :--- |
-| `--fleet <numbers...>` | `-f` | numbers | `1` | 変換対象の艦隊番号 (例: `-f 1 2 3`) |
-| `--air <numbers...>` | `-a` | numbers | なし | 変換対象の基地航空隊番号 (例: `-a 1 2`) |
-| `--title <string>` | `-t` | string | なし | YAML構造の親キータイトル名 |
-| `--fleet-title <string>` | `--ft` | string | なし | 艦隊専用の親キータイトル名 |
-| `--air-title <string>` | `--at` | string | なし | 基地航空隊専用の親キータイトル名 |
-| `--input <path>` | `-i` | path | クリップボード | 入力 JSON ファイルのパス |
-| `--output [path]` | `-o` | path | なし | テキスト保存先 (引数なし時は自動保存フォルダへ保存) |
-| `--image` | `-g` | flag | `false` | 編成画像 (PNG) を自動出力する |
-| `--image-theme <theme>` | なし | string | `official` | 画像表示テーマ (`official`, `dark`, `light`, `74lc` 等) |
-| `--image-output <path>` | なし | path | なし | 生成画像の保存先ファイルパス指定 |
-| `--no-dialog` | なし | flag | `false` | OS のファイルエクスプローラー保存ダイアログ表示をスキップする |
-| `--init-config` | なし | flag | `false` | デフォルトの `config.json` テンプレートをプロジェクトルートに初期生成する |
-| `--config <path>` | なし | path | なし | カスタム `config.json` 設定ファイルのパス指定 |
-| `--dry-run` | なし | flag | `false` | クリップボードへの書き込みを行わず標準出力へのみ出力する |
-| `-r, --refresh` | `-r` | flag | `false` | 艦娘・装備マスタデータをリモートから強制再取得・更新する |
-| `--validate` | なし | flag | `false` | 入力データの構造整合性および未知の ID チェックを実行する |
+| オプション               | 短縮   | 型      | デフォルト値   | 説明                                                                      |
+| :----------------------- | :----- | :------ | :------------- | :------------------------------------------------------------------------ |
+| `--fleet <numbers...>`   | `-f`   | numbers | `1`            | 変換対象の艦隊番号 (例: `-f 1 2 3`)                                       |
+| `--air <numbers...>`     | `-a`   | numbers | なし           | 変換対象の基地航空隊番号 (例: `-a 1 2`)                                   |
+| `--title <string>`       | `-t`   | string  | なし           | YAML構造の親キータイトル名                                                |
+| `--fleet-title <string>` | `--ft` | string  | なし           | 艦隊専用の親キータイトル名                                                |
+| `--air-title <string>`   | `--at` | string  | なし           | 基地航空隊専用の親キータイトル名                                          |
+| `--input <path>`         | `-i`   | path    | クリップボード | 入力 JSON ファイルのパス                                                  |
+| `--output [path]`        | `-o`   | path    | なし           | テキスト保存先 (引数なし時は自動保存フォルダへ保存)                       |
+| `--image`                | `-g`   | flag    | `false`        | 編成画像 (PNG) を自動出力する                                             |
+| `--image-theme <theme>`  | なし   | string  | `official`     | 画像表示テーマ (`official`, `dark`, `light`, `74lc` 等)                   |
+| `--image-output <path>`  | なし   | path    | なし           | 生成画像の保存先ファイルパス指定                                          |
+| `--no-dialog`            | なし   | flag    | `false`        | OS のファイルエクスプローラー保存ダイアログ表示をスキップする             |
+| `--init-config`          | なし   | flag    | `false`        | デフォルトの `config.json` テンプレートをプロジェクトルートに初期生成する |
+| `--config <path>`        | なし   | path    | なし           | カスタム `config.json` 設定ファイルのパス指定                             |
+| `--dry-run`              | なし   | flag    | `false`        | クリップボードへの書き込みを行わず標準出力へのみ出力する                  |
+| `-r, --refresh`          | `-r`   | flag    | `false`        | 艦娘・装備マスタデータをリモートから強制再取得・更新する                  |
+| `--validate`             | なし   | flag    | `false`        | 入力データの構造整合性および未知の ID チェックを実行する                  |
 
 ---
 
@@ -199,16 +206,23 @@ kcyaml --init-config
     - **Linux (Unverified)**: Google Chrome, Brave, Chromium, Vivaldi, or Microsoft Edge
   - *Note: Safari and Firefox are not supported for automated image generation as they do not support CDP (Chrome DevTools Protocol).*
 
-### Installation & Execution (No Repository Cloning Required)
+### Installation
 
-You can directly install and run `kcyaml` with a single `npm` command without cloning the entire repository.
+> [!WARNING]
+> This tool is managed within the same repository as the blog content. Installing via `npm install` from a subdirectory is not supported.
+> Please download the zip from [GitHub Releases](https://github.com/DovahkiinYuzuko/KanColle-Yuzuko-Blog/releases) instead.
 
-#### Global Installation
+1. Download the latest `kcyaml-vX.X.X.zip` from the [Releases page](https://github.com/DovahkiinYuzuko/KanColle-Yuzuko-Blog/releases).
+2. Extract the zip to any folder.
+3. Open a terminal inside the extracted folder and run:
+
 ```bash
-npm install -g https://gitpkg.vercel.app/DovahkiinYuzuko/KanColle-Yuzuko-Blog/kcyaml?main
+npm install
+npm run build
+npm link
 ```
 
-Once installed, the `kcyaml` command will be globally available in your terminal.
+4. Once complete, the `kcyaml` command is available globally.
 
 ---
 
@@ -240,24 +254,24 @@ kcyaml --init-config
 
 ### Command Line Options Details
 
-| Option | Short | Type | Default | Description |
-| :--- | :--- | :--- | :--- | :--- |
-| `--fleet <numbers...>` | `-f` | numbers | `1` | Fleet numbers to convert (e.g., `-f 1 2 3`) |
-| `--air <numbers...>` | `-a` | numbers | None | Land-based air base numbers to convert (e.g., `-a 1 2`) |
-| `--title <string>` | `-t` | string | None | Parent key title name in YAML structure |
-| `--fleet-title <string>` | `--ft` | string | None | Fleet-specific parent key title name |
-| `--air-title <string>` | `--at` | string | None | Air base-specific parent key title name |
-| `--input <path>` | `-i` | path | Clipboard | Input JSON file path |
-| `--output [path]` | `-o` | path | None | Text output file path (auto-saves if specified without value) |
-| `--image` | `-g` | flag | `false` | Generate fleet composition images (PNG) |
-| `--image-theme <theme>` | None | string | `official` | Display theme (`official`, `dark`, `light`, `74lc`, etc.) |
-| `--image-output <path>` | None | path | None | File path specification for output image |
-| `--no-dialog` | None | flag | `false` | Skip native OS file explorer save dialog |
-| `--init-config` | None | flag | `false` | Initialize default `config.json` template in project root |
-| `--config <path>` | None | path | None | Custom `config.json` file path specification |
-| `--dry-run` | None | flag | `false` | Output to stdout only without writing to clipboard |
-| `-r, --refresh` | `-r` | flag | `false` | Force refetch and update master data from remote repository |
-| `--validate` | None | flag | `false` | Perform data structure integrity and unknown ID validation |
+| Option                   | Short  | Type    | Default    | Description                                                   |
+| :----------------------- | :----- | :------ | :--------- | :------------------------------------------------------------ |
+| `--fleet <numbers...>`   | `-f`   | numbers | `1`        | Fleet numbers to convert (e.g., `-f 1 2 3`)                   |
+| `--air <numbers...>`     | `-a`   | numbers | None       | Land-based air base numbers to convert (e.g., `-a 1 2`)       |
+| `--title <string>`       | `-t`   | string  | None       | Parent key title name in YAML structure                       |
+| `--fleet-title <string>` | `--ft` | string  | None       | Fleet-specific parent key title name                          |
+| `--air-title <string>`   | `--at` | string  | None       | Air base-specific parent key title name                       |
+| `--input <path>`         | `-i`   | path    | Clipboard  | Input JSON file path                                          |
+| `--output [path]`        | `-o`   | path    | None       | Text output file path (auto-saves if specified without value) |
+| `--image`                | `-g`   | flag    | `false`    | Generate fleet composition images (PNG)                       |
+| `--image-theme <theme>`  | None   | string  | `official` | Display theme (`official`, `dark`, `light`, `74lc`, etc.)     |
+| `--image-output <path>`  | None   | path    | None       | File path specification for output image                      |
+| `--no-dialog`            | None   | flag    | `false`    | Skip native OS file explorer save dialog                      |
+| `--init-config`          | None   | flag    | `false`    | Initialize default `config.json` template in project root     |
+| `--config <path>`        | None   | path    | None       | Custom `config.json` file path specification                  |
+| `--dry-run`              | None   | flag    | `false`    | Output to stdout only without writing to clipboard            |
+| `-r, --refresh`          | `-r`   | flag    | `false`    | Force refetch and update master data from remote repository   |
+| `--validate`             | None   | flag    | `false`    | Perform data structure integrity and unknown ID validation    |
 
 ---
 

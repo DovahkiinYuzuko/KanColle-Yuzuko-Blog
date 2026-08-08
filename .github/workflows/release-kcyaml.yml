@@ -1,0 +1,68 @@
+name: Release kcyaml
+
+on:
+  push:
+    tags:
+      - 'kcyaml/v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#kcyaml/}" >> "$GITHUB_OUTPUT"
+
+      - name: Create release zip
+        run: |
+          mkdir -p _release
+          zip -j _release/kcyaml-${{ steps.version.outputs.version }}.zip \
+            kcyaml/index.js \
+            kcyaml/package.json \
+            kcyaml/package-lock.json \
+            kcyaml/tsconfig.json \
+            kcyaml/README.md \
+            kcyaml/LICENSE.MIT \
+            kcyaml/NOTICE.md
+          zip _release/kcyaml-${{ steps.version.outputs.version }}.zip kcyaml/src/*.ts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: kcyaml ${{ steps.version.outputs.version }}
+          tag_name: ${{ github.ref_name }}
+          files: _release/kcyaml-${{ steps.version.outputs.version }}.zip
+          body: |
+            ## kcyaml ${{ steps.version.outputs.version }}
+
+            ### セットアップ手順
+
+            1. 下記の zip ファイルをダウンロードして解凍します。
+            2. 解凍したフォルダ内で以下を実行します。
+
+            ```bash
+            npm install
+            npm run build
+            npm link
+            ```
+
+            3. `kcyaml` コマンドが利用可能になります。
+
+            ### Setup Instructions
+
+            1. Download and extract the zip file below.
+            2. Run the following commands inside the extracted folder.
+
+            ```bash
+            npm install
+            npm run build
+            npm link
+            ```
+
+            3. The `kcyaml` command is now available globally.
