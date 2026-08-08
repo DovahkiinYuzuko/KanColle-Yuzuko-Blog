@@ -60,6 +60,29 @@ export interface ParsedData {
   airBases: ParsedAirBase[];
 }
 
+export interface KcYamlConfig {
+  urls: {
+    start2Url: string;
+    shipUrl: string;
+    masterUrl: string;
+  };
+  logging: {
+    debug: boolean;
+    showBrowserLogs: boolean;
+  };
+  dialog: {
+    enabled: boolean;
+  };
+  image: {
+    defaultTheme: string;
+    quality: number;
+    palette: boolean;
+  };
+  output: {
+    defaultDir: string;
+  };
+}
+
 export interface CliOptions {
   fleet?: number[];
   air?: number[];
@@ -75,7 +98,10 @@ export interface CliOptions {
   imageTheme?: string;
   imageOutput?: string;
   noDialog?: boolean;
+  initConfig?: boolean;
+  configFile?: string;
 }
+
 
 
 export interface ValidationIssue {

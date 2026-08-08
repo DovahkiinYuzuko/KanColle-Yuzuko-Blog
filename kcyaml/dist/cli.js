@@ -8,6 +8,7 @@ import { parseDeckBuilder, validateDeckBuilder } from './parser.js';
 import { buildMarkdownOutput, buildYamlOutput } from './formatter.js';
 import { generateFleetImage } from './imageGenerator.js';
 import { promptSaveFilePath } from './fileDialog.js';
+import { loadAppConfig, initConfigFile } from './configManager.js';
 function sendOsNotification(title, message) {
     try {
         notifier.notify({
@@ -41,16 +42,24 @@ export async function runCli(argv) {
         .option('--ft, --fleet-title <string>', '艦隊専用のタイトル名')
         .option('--at, --air-title <string>', '基地航空隊専用のタイトル名')
         .option('-i, --input <path>', '入力JSONファイルパス (未指定時はクリップボードから取得)')
-        .option('-o, --output [path]', '出力ファイルパス (引数なしの場合は kcdata-output/ に自動保存)')
+        .option('-o, --output [path]', '出力ファイルパス (引数なしの場合は config.json の規定フォルダに自動保存)')
         .option('-g, --image', '編成画像(PNG)を出力する', false)
-        .option('--image-theme <theme>', '編成画像の表示テーマ (official, dark, light, 74lc 等)', 'official')
+        .option('--image-theme <theme>', '編成画像の表示テーマ (official, dark, light, 74lc 等)')
         .option('--image-output <path>', '編成画像の保存先ファイルパス')
-        .option('--no-dialog', 'OSのエクスプローラー保存ダイアログ表示をスキップする', false)
+        .option('--no-dialog', 'OSのエクスプローラー保存ダイアログ表示をスキップする')
+        .option('--init-config', 'デフォルトの config.json ファイルをプロジェクトルートに初期生成する', false)
+        .option('--config <path>', 'カスタム config.json ファイルのパス')
         .option('--dry-run', 'クリップボード書き込みを行わずstdout出力のみ', false)
         .option('-r, --refresh', 'マスタデータをリモートから強制再取得・更新する', false)
         .option('--validate', '入力データの整合性・未知のIDチェックを実行する', false);
     program.parse(argv);
     const opts = program.opts();
+    if (opts.initConfig) {
+        const createdPath = initConfigFile();
+        console.error(`[kcyaml:SUCCESS] デフォルトの config.json を '${createdPath}' に生成しました。`);
+        return;
+    }
+    const appConfig = loadAppConfig(opts.config);
     const parsedFleet = opts.fleet
         ? (Array.isArray(opts.fleet) ? opts.fleet : [opts.fleet]).map((n) => parseInt(String(n), 10)).filter((n) => !isNaN(n))
         : undefined;
@@ -66,12 +75,14 @@ export async function runCli(argv) {
         input: opts.input,
         output: opts.output,
         image: opts.image,
-        imageTheme: opts.imageTheme,
+        imageTheme: opts.imageTheme || appConfig.image.defaultTheme,
         imageOutput: opts.imageOutput,
-        noDialog: !opts.dialog,
+        noDialog: opts.dialog === false ? true : !appConfig.dialog.enabled,
         dryRun: opts.dryRun,
         refresh: opts.refresh,
         validate: opts.validate,
+        initConfig: opts.initConfig,
+        configFile: opts.config,
     };
     if (!options.fleet && !options.air) {
         options.fleet = [1];
