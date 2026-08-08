@@ -1,0 +1,26 @@
+{
+  "name": "kcyaml",
+  "version": "0.1.0",
+  "description": "KanColle Deck Builder JSON to Markdown YAML Converter",
+  "main": "index.js",
+  "type": "module",
+  "bin": {
+    "kcyaml": "./index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Yuzuko Underson",
+  "license": "MIT",
+  "dependencies": {
+    "clipboardy": "^5.3.2",
+    "commander": "^15.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "typescript": "^7.0.2"
+  }
+}

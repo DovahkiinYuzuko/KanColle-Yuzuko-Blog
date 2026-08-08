@@ -10,3 +10,21 @@
 !2026_summer/E1/**
 !2026_summer/E2/
 !2026_summer/E2/**
+# .gitignores/kcyaml.gitignore
+!kcyaml/
+
+!kcyaml/README.md
+!kcyaml/LICENSE.*
+!kcyaml/NOTICE.md
+
+!kcyaml/index.js
+!kcyaml/package.json
+!kcyaml/tsconfig.json
+
+!kcyaml/docs/
+!kcyaml/docs/tag-index.md
+!kcyaml/docs/variables'n'functions/
+!kcyaml/docs/variables'n'functions/**
+
+!kcyaml/src/
+!kcyaml/src/*.ts
