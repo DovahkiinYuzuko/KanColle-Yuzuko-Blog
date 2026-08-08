@@ -1,10 +1,11 @@
 import fs from 'fs';
+import path from 'path';
 import { Command } from 'commander';
 import clipboardy from 'clipboardy';
 import notifier from 'node-notifier';
 import { loadMasterData } from './masterData.js';
-import { parseDeckBuilder } from './parser.js';
-import { buildMarkdownOutput } from './formatter.js';
+import { parseDeckBuilder, validateDeckBuilder } from './parser.js';
+import { buildMarkdownOutput, buildYamlOutput } from './formatter.js';
 function sendOsNotification(title, message) {
     try {
         notifier.notify({
@@ -28,8 +29,10 @@ export async function runCli(argv) {
         .option('--ft, --fleet-title <string>', '艦隊専用のタイトル名')
         .option('--at, --air-title <string>', '基地航空隊専用のタイトル名')
         .option('-i, --input <path>', '入力JSONファイルパス (未指定時はクリップボードから取得)')
+        .option('-o, --output <path>', '出力ファイルパス (.yaml/.yml 指定時は純粋YAMLで保存)')
         .option('--dry-run', 'クリップボード書き込みを行わずstdout出力のみ', false)
-        .option('-r, --refresh', 'マスタデータをリモートから強制再取得・更新する', false);
+        .option('-r, --refresh', 'マスタデータをリモートから強制再取得・更新する', false)
+        .option('--validate', '入力データの整合性・未知のIDチェックを実行する', false);
     program.parse(argv);
     const opts = program.opts();
     const parsedFleet = opts.fleet
@@ -45,8 +48,10 @@ export async function runCli(argv) {
         fleetTitle: opts.fleetTitle,
         airTitle: opts.airTitle,
         input: opts.input,
+        output: opts.output,
         dryRun: opts.dryRun,
         refresh: opts.refresh,
+        validate: opts.validate,
     };
     if (!options.fleet && !options.air) {
         options.fleet = [1];
@@ -76,8 +81,35 @@ export async function runCli(argv) {
     }
     try {
         const masterData = await loadMasterData(options.refresh);
+        if (options.validate) {
+            const report = validateDeckBuilder(inputText, options, masterData);
+            console.log('=== Deck Builder データ検証結果 ===');
+            if (report.issues.length === 0) {
+                console.log('OK: データに異常や未登録IDは見つかりませんでした。');
+            }
+            else {
+                for (const issue of report.issues) {
+                    console.log(`[${issue.type}] ${issue.message}`);
+                }
+            }
+            console.log('====================================\n');
+        }
         const parsedData = parseDeckBuilder(inputText, options, masterData);
         const markdownResult = buildMarkdownOutput(parsedData, options);
+        let outputContent = markdownResult;
+        if (options.output) {
+            const ext = path.extname(options.output).toLowerCase();
+            if (ext === '.yaml' || ext === '.yml') {
+                outputContent = buildYamlOutput(parsedData, options);
+            }
+            try {
+                fs.writeFileSync(options.output, outputContent, 'utf-8');
+                console.error(`\n(ファイル '${options.output}' に保存しました)`);
+            }
+            catch (err) {
+                console.error(`エラー: ファイル '${options.output}' への保存に失敗しました: ${err.message}`);
+            }
+        }
         console.log(markdownResult);
         if (!options.dryRun) {
             try {

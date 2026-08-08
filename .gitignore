@@ -28,3 +28,5 @@
 
 !kcyaml/src/
 !kcyaml/src/*.ts
+!kcyaml/dist/
+!kcyaml/dist/*.js

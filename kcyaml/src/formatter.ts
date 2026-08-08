@@ -1,8 +1,6 @@
 import { ParsedData, CliOptions } from './types.js';
 
-export function buildMarkdownOutput(parsedData: ParsedData, options: CliOptions): string {
-  const lines: string[] = [];
-
+function getFinalTitles(parsedData: ParsedData, options: CliOptions): { finalFleetTitle: string; finalAirTitle: string } {
   let baseTitle = options.title;
   let fleetTitle = options.fleetTitle;
   let airTitle = options.airTitle;
@@ -22,9 +20,16 @@ export function buildMarkdownOutput(parsedData: ParsedData, options: CliOptions)
   const finalFleetTitle = fleetTitle || baseTitle || '艦隊';
   const finalAirTitle = airTitle || (baseTitle ? (baseTitle.includes('基地') ? baseTitle : `${baseTitle}基地航空隊`) : '基地航空隊');
 
+  return { finalFleetTitle, finalAirTitle };
+}
+
+export function buildMarkdownOutput(parsedData: ParsedData, options: CliOptions): string {
+  const lines: string[] = [];
+  const { finalFleetTitle, finalAirTitle } = getFinalTitles(parsedData, options);
+
   if (parsedData.fleets.length > 0) {
     for (const fleet of parsedData.fleets) {
-      lines.push(`- **第${fleet.number}艦隊:**\n`);
+      lines.push(`- **第${fleet.number}艦隊:**`);
       lines.push('```yaml');
       lines.push(`${finalFleetTitle}:`);
 
@@ -47,6 +52,7 @@ export function buildMarkdownOutput(parsedData: ParsedData, options: CliOptions)
   }
 
   if (parsedData.airBases.length > 0) {
+    lines.push('- **基地航空隊:**');
     lines.push('```yaml');
     lines.push(`${finalAirTitle}:`);
 
@@ -65,6 +71,41 @@ export function buildMarkdownOutput(parsedData: ParsedData, options: CliOptions)
     }
     lines.push('```');
     lines.push('');
+  }
+
+  return lines.join('\n').trimEnd();
+}
+
+export function buildYamlOutput(parsedData: ParsedData, options: CliOptions): string {
+  const lines: string[] = [];
+  const { finalFleetTitle, finalAirTitle } = getFinalTitles(parsedData, options);
+
+  if (parsedData.fleets.length > 0) {
+    for (const fleet of parsedData.fleets) {
+      lines.push(`${finalFleetTitle}_F${fleet.number}:`);
+      for (const ship of fleet.ships) {
+        lines.push(`  - name: ${ship.name}`);
+        lines.push(`    level: ${ship.level}`);
+        lines.push('    equipments:');
+        for (const eq of ship.equipments) {
+          lines.push(`      - ${eq}`);
+        }
+        lines.push('');
+      }
+    }
+  }
+
+  if (parsedData.airBases.length > 0) {
+    lines.push(`${finalAirTitle}:`);
+    for (const air of parsedData.airBases) {
+      lines.push(`  - number: ${air.number}`);
+      lines.push(`    mode: ${air.mode}`);
+      lines.push('    squadrons:');
+      for (const sq of air.squadrons) {
+        lines.push(`      - ${sq}`);
+      }
+      lines.push('');
+    }
   }
 
   return lines.join('\n').trimEnd();

@@ -6,6 +6,8 @@ import {
   ParsedShip,
   ParsedAirBase,
   CliOptions,
+  ValidationReport,
+  ValidationIssue,
 } from './types.js';
 
 const MODE_MAP: Record<number, string> = {
@@ -126,4 +128,59 @@ export function parseDeckBuilder(
   }
 
   return result;
+}
+
+export function validateDeckBuilder(
+  jsonText: string,
+  options: CliOptions,
+  masterData: MasterData
+): ValidationReport {
+  const issues: ValidationIssue[] = [];
+
+  let rawData: DeckBuilderData;
+  try {
+    rawData = JSON.parse(jsonText);
+  } catch (err) {
+    return {
+      isValid: false,
+      issues: [{ type: 'ERROR', message: '入力データが正当なJSON形式ではありません。' }],
+    };
+  }
+
+  if (!rawData.f1 && !rawData.a1) {
+    issues.push({ type: 'WARNING', message: 'Deck Builder の標準キー (f1 または a1) が検出されませんでした。' });
+  }
+
+  if (options.fleet) {
+    for (const num of options.fleet) {
+      const fleetObj = rawData[`f${num}`];
+      if (!fleetObj) {
+        issues.push({ type: 'WARNING', message: `指定された第${num}艦隊 (f${num}) がJSON内に存在しません。` });
+        continue;
+      }
+
+      for (let sIdx = 1; sIdx <= 7; sIdx++) {
+        const shipObj = fleetObj[`s${sIdx}`];
+        if (!shipObj || !shipObj.id) continue;
+
+        if (!masterData.ships[shipObj.id] && !masterData.ships[String(shipObj.id)]) {
+          issues.push({ type: 'WARNING', message: `未登録の艦娘 ID を検出しました: ${shipObj.id} (第${num}艦隊 艦娘${sIdx})` });
+        }
+
+        if (shipObj.items && typeof shipObj.items === 'object') {
+          for (const key of Object.keys(shipObj.items)) {
+            const itemObj = shipObj.items[key];
+            if (itemObj && itemObj.id && !masterData.items[itemObj.id] && !masterData.items[String(itemObj.id)]) {
+              issues.push({ type: 'WARNING', message: `未登録の装備 ID を検出しました: ${itemObj.id} (第${num}艦隊 艦娘${sIdx} スロット ${key})` });
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return {
+    isValid: issues.filter(i => i.type === 'ERROR').length === 0,
+    issues,
+  };
 }

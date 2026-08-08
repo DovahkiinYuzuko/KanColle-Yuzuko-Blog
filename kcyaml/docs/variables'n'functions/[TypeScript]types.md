@@ -1,7 +1,7 @@
 ---
 source_file: "kcyaml/src/types.ts"
 language: "TypeScript"
-description: "TypeScript interfaces and types for Deck Builder JSON, Master Data, and CLI Options."
+description: "TypeScript interfaces and types for Deck Builder JSON, Master Data, CLI Options, and Validation."
 tags: [@KcYamlTypes]
 exports:
   - `DeckBuilderData`
@@ -10,13 +10,15 @@ exports:
   - `ParsedFleet`
   - `ParsedAirBase`
   - `CliOptions`
+  - `ValidationIssue`
+  - `ValidationReport`
 imports: []
 ---
 
 # Specification: `types.ts`
 
 ## Overview
-`types.ts` は `kcyaml` 内部で扱う全データ構造（Deck Builder JSON、マスタデータ、中間型、CLIオプション）の型定義をまとめたモジュール。
+`types.ts` は `kcyaml` 内部で扱う全データ構造（Deck Builder JSON、マスタデータ、中間型、CLIオプション、検証レポート）の型定義をまとめたモジュール。
 
 ## Variables and Functions
 
@@ -26,4 +28,12 @@ imports: []
 
 ### `CliOptions`
 * **Type:** `interface`
-* **Description:** CLI コマンド引数・オプションのインターフェース。
+* **Description:** CLI コマンド引数・オプション（-o/--output, --validate を含む）のインターフェース。
+
+### `ValidationIssue`
+* **Type:** `interface`
+* **Description:** バリデーション時の警告・エラー情報を保持するインターフェース。
+
+### `ValidationReport`
+* **Type:** `interface`
+* **Description:** 全体の検証結果および問題一覧を保持するインターフェース。

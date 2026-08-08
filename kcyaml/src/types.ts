@@ -67,6 +67,18 @@ export interface CliOptions {
   fleetTitle?: string;
   airTitle?: string;
   input?: string;
+  output?: string;
   dryRun?: boolean;
   refresh?: boolean;
+  validate?: boolean;
+}
+
+export interface ValidationIssue {
+  type: 'ERROR' | 'WARNING';
+  message: string;
+}
+
+export interface ValidationReport {
+  isValid: boolean;
+  issues: ValidationIssue[];
 }

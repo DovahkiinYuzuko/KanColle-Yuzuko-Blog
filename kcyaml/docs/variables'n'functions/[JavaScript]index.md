@@ -1,7 +1,7 @@
 ---
 source_file: "kcyaml/index.js"
 language: "JavaScript"
-description: "CLI launcher entrypoint that detects Bun in PATH and switches runtime dynamically."
+description: "CLI launcher entrypoint that checks Bun version dynamically and switches runtime."
 tags: [@KcYamlLauncher]
 exports: []
 imports:
@@ -11,13 +11,13 @@ imports:
 # Specification: `index.js`
 
 ## Overview
-`index.js` は `kcyaml` コマンドの単一エントリーポイントであり、`PATH` 内の `bun` の有無を判定し、`bun` または `node` で CLI メイン処理を起動する。
+`index.js` は `kcyaml` コマンドの単一エントリーポイントであり、`bun -v` で Bun の利用可能性を判定し、`bun` または `node` で CLI メイン処理を起動する。
 
 ## Variables and Functions
 
-### `isBunAvailable`
+### `checkBunVersion`
 * **Type:** `function`
-* **Description:** システム環境変数 `PATH` 内に `bun` が利用可能かを示す判定関数。
+* **Description:** `bun -v` を実行し Bun が利用可能か判別してバージョン文字列を返す。
 
 ### `main`
 * **Type:** `function`
