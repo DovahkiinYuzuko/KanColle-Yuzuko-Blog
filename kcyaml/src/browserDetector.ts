@@ -4,6 +4,7 @@ import { execSync } from 'child_process';
 
 /**
  * Detects the executable path of the system default or installed Chromium-based browser.
+ * Supports Google Chrome, Microsoft Edge, Brave, Vivaldi, Opera, Arc, and Chromium.
  */
 export function detectSystemBrowserPath(): string | null {
   const platform = process.platform;
@@ -31,26 +32,35 @@ export function detectSystemBrowserPath(): string | null {
         for (const p of chromePaths) {
           if (fs.existsSync(p)) return p;
         }
+      } else if (progId.includes('Brave')) {
+        const bravePath = 'C:\\Program Files\\BraveSoftware\\Brave-Browser\\Application\\brave.exe';
+        if (fs.existsSync(bravePath)) return bravePath;
       }
     } catch (e) {}
 
-    // 2. Windows Fallback search
+    // 2. Windows Fallback search for all installed Chromium browsers
     const winPaths = [
-      'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
-      'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
       'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
       'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
       path.join(process.env.LOCALAPPDATA || '', 'Google\\Chrome\\Application\\chrome.exe'),
+      'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
+      'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
+      'C:\\Program Files\\BraveSoftware\\Brave-Browser\\Application\\brave.exe',
+      'C:\\Program Files\\Vivaldi\\Application\\vivaldi.exe',
+      path.join(process.env.LOCALAPPDATA || '', 'Programs\\Opera\\opera.exe'),
     ];
     for (const p of winPaths) {
       if (fs.existsSync(p)) return p;
     }
   } else if (platform === 'darwin') {
-    // macOS paths
+    // macOS paths for all common Chromium-based browsers
     const macPaths = [
       '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-      '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
       '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser',
+      '/Applications/Arc.app/Contents/MacOS/Arc',
+      '/Applications/Vivaldi.app/Contents/MacOS/Vivaldi',
+      '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
+      '/Applications/Opera.app/Contents/MacOS/Opera',
       '/Applications/Chromium.app/Contents/MacOS/Chromium',
     ];
     for (const p of macPaths) {
@@ -61,8 +71,10 @@ export function detectSystemBrowserPath(): string | null {
     const linuxBinaries = [
       'google-chrome',
       'google-chrome-stable',
+      'brave-browser',
       'chromium-browser',
       'chromium',
+      'vivaldi',
       'microsoft-edge-stable',
     ];
     for (const bin of linuxBinaries) {

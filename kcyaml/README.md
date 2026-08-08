@@ -22,7 +22,7 @@
   - クリップボードまたは指定した JSON ファイルから艦隊（第1〜第4艦隊）および基地航空隊（第1〜第3基地）の情報を解析します。
   - 艦娘のレベル・装備・補強増設スロット・装備改修値（`☆N`）を保持したまま、視認性の高い Markdown 構造へ整形します。（※熟練度 `mas` は自動除外されます）
 - **システムブラウザ自動探知による編成画像生成 (`-g`)**:
-  - 重い Chromium の事前ダウンロードを行わず、OS 内にインストールされている標準ブラウザ（Google Chrome、Microsoft Edge、Brave 等）を自動検出してバックグラウンド制御します。
+  - 重い Chromium の事前ダウンロードを行わず、OS 内にインストールされている標準の Chromium 系ブラウザ（Google Chrome、Brave、Arc、Vivaldi、Microsoft Edge、Opera 等）を自動検出してバックグラウンド制御します。
   - 制空権シミュレーターと完全に互換性のあるデザインテーマ (`official`, `dark`, `light`, `74lc` 等) で画像を即時描画します。
 - **256色カラーパレット量子化および超軽量化**:
   - 生成された PNG 画像は `sharp` ライブラリによって 256 色パレット化およびメタデータ除去が行われ、高画質なままファイルサイズを大幅に削減します。
@@ -37,21 +37,25 @@
 - **ランタイム**: Node.js v18.0.0 以上 (または Bun 環境)
 - **対応OS**: Windows 11 / 10、macOS、Linux
 - **必要ブラウザ (編成画像生成機能 `-g` 利用時)**:
-  - 以下のいずれかのブラウザが OS にインストールされている必要があります。
-    - **Windows**: Microsoft Edge または Google Chrome
-    - **macOS**: Google Chrome、Microsoft Edge、または Brave
-    - **Linux**: Chromium または Google Chrome
+  - 画像生成エンジン (`puppeteer-core`) の制御仕様上、以下のいずれかの Chromium 系ブラウザが OS にインストールされている必要があります。
+    - **macOS**: Google Chrome、Brave、Arc、Vivaldi、Microsoft Edge、Opera、または Chromium
+    - **Windows**: Google Chrome、Microsoft Edge、Brave、Vivaldi、または Opera
+    - **Linux**: Google Chrome、Brave、Chromium、Vivaldi、または Microsoft Edge
+  - ※ Safari および Firefox は CDP (Chrome DevTools Protocol) 非対応のため、画像自動生成エンジンの制御対象外となります。
 
 ### インストール方法
 
+#### 方法 A: ネット経由でのワンライナー直接インストール
 ```bash
-# リポジトリのクローンとビルド
+npm install -g https://gitpkg.vercel.app/DovahkiinYuzuko/KanColle-Yuzuko-Blog/kcyaml?main
+```
+
+#### 方法 B: リポジトリのクローンによるインストール
+```bash
 git clone https://github.com/DovahkiinYuzuko/KanColle-Yuzuko-Blog.git
-cd kcyaml
+cd KanColle-Yuzuko-Blog/kcyaml
 npm install
 npm run build
-
-# グローバルコマンドとして登録
 npm link
 ```
 
@@ -172,7 +176,7 @@ kcyaml --init-config
   - Parses fleet (Fleets 1 to 4) and land-based air base (Bases 1 to 3) data from either the system clipboard or local JSON files.
   - Formats output into clean Markdown structures while preserving ship levels, equipment, expansion slots, and equipment improvement levels (`☆N`). (Note: Aircraft proficiency `mas` is automatically excluded).
 - **Fleet Image Generation via System Browser Detection (`-g`)**:
-  - Automatically detects and controls system browsers (Google Chrome, Microsoft Edge, Brave, etc.) installed on the OS in headless mode without downloading extra Chromium binaries.
+  - Automatically detects and controls system Chromium-based browsers (Google Chrome, Brave, Arc, Vivaldi, Microsoft Edge, Opera, etc.) installed on the OS in headless mode without downloading extra Chromium binaries.
   - Instantly renders high-quality fleet composition images using themes fully compatible with simulators (`official`, `dark`, `light`, `74lc`, etc.).
 - **256-Color Palette Quantization & Optimization**:
   - Generated PNG images are processed via `sharp` for 256-color palette quantization and metadata stripping, significantly reducing file sizes while maintaining visual quality.
@@ -187,21 +191,25 @@ kcyaml --init-config
 - **Runtime**: Node.js v18.0.0 or higher (or Bun environment)
 - **Supported OS**: Windows 11 / 10, macOS, Linux
 - **Required Browsers (for image generation `-g`)**:
-  - One of the following browsers must be installed on your OS:
-    - **Windows**: Microsoft Edge or Google Chrome
-    - **macOS**: Google Chrome, Microsoft Edge, or Brave
-    - **Linux**: Chromium or Google Chrome
+  - Due to automation engine (`puppeteer-core`) specifications, one of the following Chromium-based browsers must be installed on your OS:
+    - **macOS**: Google Chrome, Brave, Arc, Vivaldi, Microsoft Edge, Opera, or Chromium
+    - **Windows**: Google Chrome, Microsoft Edge, Brave, Vivaldi, or Opera
+    - **Linux**: Google Chrome, Brave, Chromium, Vivaldi, or Microsoft Edge
+  - *Note: Safari and Firefox are not supported for automated image generation as they do not support CDP (Chrome DevTools Protocol).*
 
 ### Installation
 
+#### Method A: Direct One-Liner Global Installation via Network
 ```bash
-# Clone repository and build
+npm install -g https://gitpkg.vercel.app/DovahkiinYuzuko/KanColle-Yuzuko-Blog/kcyaml?main
+```
+
+#### Method B: Installation via Repository Clone
+```bash
 git clone https://github.com/DovahkiinYuzuko/KanColle-Yuzuko-Blog.git
-cd kcyaml
+cd KanColle-Yuzuko-Blog/kcyaml
 npm install
 npm run build
-
-# Link globally
 npm link
 ```
 
@@ -298,7 +306,7 @@ You can adjust fine-grained runtime behavior in `config.json` at the project roo
     level: 173
     equipments:
       - 20.3cm(2号)連装砲☆5
-      - 20.3cm(3号)連装砲☆2
+      - 20.3cm(3号)连装砲☆2
       - 42号対空電探
       - 零式水上観測機
       - 三式弾
