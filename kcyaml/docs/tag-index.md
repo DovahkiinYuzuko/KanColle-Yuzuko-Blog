@@ -42,3 +42,9 @@
 * **Usage:**
   * [kcyaml/docs/variables'n'functions/[TypeScript]fileDialog.md](file:///c:/Users/rikui/Documents/艦これ/kcyaml/docs/variables'n'functions/[TypeScript]fileDialog.md)
 
+### `@KcYamlBrowserDetector`
+* **Description:** Cross-platform system default and installed browser detector for Headless rendering.
+* **Usage:**
+  * [kcyaml/docs/variables'n'functions/[TypeScript]browserDetector.md](file:///c:/Users/rikui/Documents/艦これ/kcyaml/docs/variables'n'functions/[TypeScript]browserDetector.md)
+
+

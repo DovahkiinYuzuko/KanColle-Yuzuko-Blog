@@ -1,12 +1,12 @@
 ---
 source_file: "kcyaml/src/imageGenerator.ts"
 language: "TypeScript"
-description: "Generates 256-color optimized fleet organization PNG images using gkcoi and sharp."
+description: "Generates fleet organization images using system headless browser (Edge/Chrome) via puppeteer-core, optimized to 256 colors with sharp."
 tags: [@KcYamlImageGenerator]
 exports:
   - generateFleetImage
 imports:
-  - "kcyaml/src/types.ts"
+  - "kcyaml/src/browserDetector.ts"
 ---
 
 # `imageGenerator.ts` Specification
@@ -14,8 +14,8 @@ imports:
 ## Functions
 
 ### `generateFleetImage`
-* **Description:** Generates fleet composition PNG image from DeckBuilder data with 256-color optimization and metadata removal.
-* **Parameters:**
-  * `deckData`: `DeckBuilder` object containing fleet formation.
-  * `theme`: `string` - Theme for image (default: `"official"`).
-* **Return:** `Promise<Buffer>` - 256-color optimized PNG image buffer.
+* **Description:** Launches detected system browser in headless mode via `puppeteer-core`, renders fleet composition image via `gkcoi`, extracts PNG buffer, and performs 256-color palette quantization using `sharp`.
+* **Arguments:**
+  * `deckBuilder`: `DeckBuilder` object containing fleet composition
+  * `theme`: `string` (Theme name, default: `'official'`)
+* **Return Value:** `Promise<Buffer>` (PNG image buffer optimized to 256-color palette)
