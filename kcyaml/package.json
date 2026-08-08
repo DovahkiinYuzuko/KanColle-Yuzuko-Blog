@@ -16,11 +16,16 @@
   "author": "Yuzuko Underson",
   "license": "MIT",
   "dependencies": {
+    "canvas": "^3.2.3",
     "clipboardy": "^5.3.2",
     "commander": "^15.0.0",
-    "node-notifier": "^10.0.1"
+    "gkcoi": "^1.7.2",
+    "jsdom": "^30.0.1",
+    "node-notifier": "^10.0.1",
+    "sharp": "^0.35.3"
   },
   "devDependencies": {
+    "@types/jsdom": "^30.0.0",
     "@types/node": "^26.2.0",
     "@types/node-notifier": "^8.0.5",
     "typescript": "^7.0.2"

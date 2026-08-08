@@ -28,7 +28,8 @@ imports: []
 
 ### `CliOptions`
 * **Type:** `interface`
-* **Description:** CLI コマンド引数・オプション（-o/--output, --validate を含む）のインターフェース。
+* **Description:** CLI コマンド引数・オプション（-o/--output, --validate, -g/--image, --image-theme, --image-output 等を含む）のインターフェース。
+
 
 ### `ValidationIssue`
 * **Type:** `interface`

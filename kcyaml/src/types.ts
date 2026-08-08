@@ -71,7 +71,12 @@ export interface CliOptions {
   dryRun?: boolean;
   refresh?: boolean;
   validate?: boolean;
+  image?: boolean;
+  imageTheme?: string;
+  imageOutput?: string;
+  noDialog?: boolean;
 }
+
 
 export interface ValidationIssue {
   type: 'ERROR' | 'WARNING';

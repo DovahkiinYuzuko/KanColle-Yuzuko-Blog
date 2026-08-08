@@ -31,3 +31,14 @@
 * **Description:** Type definitions for Deck Builder JSON, Master Data, and CLI options.
 * **Usage:**
   * [kcyaml/docs/variables'n'functions/[TypeScript]types.md](file:///c:/Users/rikui/Documents/艦これ/kcyaml/docs/variables'n'functions/[TypeScript]types.md)
+
+### `@KcYamlImageGenerator`
+* **Description:** Fleet organization image generator and 256-color optimizer using gkcoi & sharp.
+* **Usage:**
+  * [kcyaml/docs/variables'n'functions/[TypeScript]imageGenerator.md](file:///c:/Users/rikui/Documents/艦これ/kcyaml/docs/variables'n'functions/[TypeScript]imageGenerator.md)
+
+### `@KcYamlFileDialog`
+* **Description:** Cross-platform native save file dialog launcher for Windows, macOS, and Linux.
+* **Usage:**
+  * [kcyaml/docs/variables'n'functions/[TypeScript]fileDialog.md](file:///c:/Users/rikui/Documents/艦これ/kcyaml/docs/variables'n'functions/[TypeScript]fileDialog.md)
+

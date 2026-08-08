@@ -6,6 +6,8 @@ import notifier from 'node-notifier';
 import { loadMasterData } from './masterData.js';
 import { parseDeckBuilder, validateDeckBuilder } from './parser.js';
 import { buildMarkdownOutput, buildYamlOutput } from './formatter.js';
+import { generateFleetImage } from './imageGenerator.js';
+import { promptSaveFilePath } from './fileDialog.js';
 function sendOsNotification(title, message) {
     try {
         notifier.notify({
@@ -40,6 +42,10 @@ export async function runCli(argv) {
         .option('--at, --air-title <string>', '基地航空隊専用のタイトル名')
         .option('-i, --input <path>', '入力JSONファイルパス (未指定時はクリップボードから取得)')
         .option('-o, --output [path]', '出力ファイルパス (引数なしの場合は kcdata-output/ に自動保存)')
+        .option('-g, --image', '編成画像(PNG)を出力する', false)
+        .option('--image-theme <theme>', '編成画像の表示テーマ (official, dark, light, 74lc 等)', 'official')
+        .option('--image-output <path>', '編成画像の保存先ファイルパス')
+        .option('--no-dialog', 'OSのエクスプローラー保存ダイアログ表示をスキップする', false)
         .option('--dry-run', 'クリップボード書き込みを行わずstdout出力のみ', false)
         .option('-r, --refresh', 'マスタデータをリモートから強制再取得・更新する', false)
         .option('--validate', '入力データの整合性・未知のIDチェックを実行する', false);
@@ -59,6 +65,10 @@ export async function runCli(argv) {
         airTitle: opts.airTitle,
         input: opts.input,
         output: opts.output,
+        image: opts.image,
+        imageTheme: opts.imageTheme,
+        imageOutput: opts.imageOutput,
+        noDialog: !opts.dialog,
         dryRun: opts.dryRun,
         refresh: opts.refresh,
         validate: opts.validate,
@@ -90,6 +100,7 @@ export async function runCli(argv) {
         process.exit(1);
     }
     try {
+        const rawDeckObj = JSON.parse(inputText);
         const masterData = await loadMasterData(options.refresh);
         if (options.validate) {
             const report = validateDeckBuilder(inputText, options, masterData);
@@ -136,6 +147,43 @@ export async function runCli(argv) {
                 catch (err) {
                     console.error(`エラー: ファイル '${targetPath}' への保存に失敗しました: ${err.message}`);
                 }
+            }
+        }
+        // Process image output if -g / --image is specified
+        if (options.image) {
+            try {
+                console.error('\n(編成画像を生成中...)');
+                const theme = options.imageTheme || 'official';
+                const imageBuffer = await generateFleetImage(rawDeckObj, theme);
+                let imageSavePath = options.imageOutput;
+                // Prompt via OS dialog if imageOutput is not explicitly specified and dialog is enabled
+                if (!imageSavePath && !options.noDialog) {
+                    const defaultTitle = options.title || options.fleetTitle || 'fleet_composition';
+                    const defaultFilename = `${defaultTitle.replace(/[\\/:*?"<>|]/g, '_')}_${getFormattedTimestamp()}.png`;
+                    const selectedPath = await promptSaveFilePath(defaultFilename);
+                    if (selectedPath) {
+                        imageSavePath = selectedPath;
+                    }
+                }
+                // Fallback to default output folder if dialog was canceled or disabled
+                if (!imageSavePath) {
+                    const dirPath = path.join(process.cwd(), 'kcdata-output');
+                    if (!fs.existsSync(dirPath)) {
+                        fs.mkdirSync(dirPath, { recursive: true });
+                    }
+                    const defaultTitle = options.title || options.fleetTitle || 'fleet_composition';
+                    const filename = `${defaultTitle.replace(/[\\/:*?"<>|]/g, '_')}_${getFormattedTimestamp()}.png`;
+                    imageSavePath = path.join(dirPath, filename);
+                }
+                const imgDir = path.dirname(imageSavePath);
+                if (!fs.existsSync(imgDir)) {
+                    fs.mkdirSync(imgDir, { recursive: true });
+                }
+                fs.writeFileSync(imageSavePath, imageBuffer);
+                console.error(`(編成画像を256色軽量化の上 '${imageSavePath}' に保存しました)`);
+            }
+            catch (imgErr) {
+                console.error(`(警告: 編成画像の生成・保存に失敗しました: ${imgErr.message})`);
             }
         }
         console.log(markdownResult);
