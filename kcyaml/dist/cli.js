@@ -82,7 +82,7 @@ export async function runCli(argv) {
             inputText = fs.readFileSync(options.input, 'utf-8');
         }
         catch (err) {
-            console.error(`エラー: 入力ファイル '${options.input}' の読み込みに失敗しました: ${err.message}`);
+            console.error(`[kcyaml:ERROR] 入力ファイル '${options.input}' の読み込みに失敗しました: ${err.message}`);
             process.exit(1);
         }
     }
@@ -91,17 +91,19 @@ export async function runCli(argv) {
             inputText = await clipboardy.read();
         }
         catch (err) {
-            console.error(`エラー: クリップボードからの読み取りに失敗しました: ${err.message}`);
+            console.error(`[kcyaml:ERROR] クリップボードからの読み取りに失敗しました: ${err.message}`);
             process.exit(1);
         }
     }
     if (!inputText || inputText.trim() === '') {
-        console.error('エラー: 入力データが空です。ファイル指定 (-i) またはクリップボードにJSONをコピーしてください。');
+        console.error('[kcyaml:ERROR] 入力データが空です。ファイル指定 (-i) またはクリップボードにJSONをコピーしてください。');
         process.exit(1);
     }
     try {
         const rawDeckObj = JSON.parse(inputText);
+        console.error('[kcyaml:LOG] 入力JSONデータを正常に解析しました。');
         const masterData = await loadMasterData(options.refresh);
+        console.error('[kcyaml:LOG] マスタデータの読み込みを完了しました。');
         if (options.validate) {
             const report = validateDeckBuilder(inputText, options, masterData);
             console.log('=== Deck Builder データ検証結果 ===');
@@ -117,6 +119,7 @@ export async function runCli(argv) {
         }
         const parsedData = parseDeckBuilder(inputText, options, masterData);
         const markdownResult = buildMarkdownOutput(parsedData, options);
+        // 1. Output YAML / Markdown file if -o is specified
         if (options.output !== undefined) {
             let targetPath = '';
             let isPureYaml = false;
@@ -142,48 +145,69 @@ export async function runCli(argv) {
                 const outputContent = isPureYaml ? buildYamlOutput(parsedData, options) : markdownResult;
                 try {
                     fs.writeFileSync(targetPath, outputContent, 'utf-8');
-                    console.error(`\n(ファイル '${targetPath}' に保存しました)`);
+                    console.error(`[kcyaml:SUCCESS] テキストファイル '${targetPath}' に保存しました。`);
                 }
                 catch (err) {
-                    console.error(`エラー: ファイル '${targetPath}' への保存に失敗しました: ${err.message}`);
+                    console.error(`[kcyaml:ERROR] ファイル '${targetPath}' への保存に失敗しました: ${err.message}`);
                 }
             }
         }
-        // Process image output if -g / --image is specified
-        if (options.image) {
+        // 2. Output YAML to console / stdout immediately
+        console.log(markdownResult);
+        // 3. Copy to clipboard immediately
+        if (!options.dryRun) {
             try {
-                console.error('\n(編成画像を生成中...)');
-                const theme = options.imageTheme || 'official';
-                const targetFleets = options.fleet || [1];
-                for (const fleetNum of targetFleets) {
-                    const fleetKey = `f${fleetNum}`;
-                    if (!rawDeckObj[fleetKey]) {
-                        continue;
-                    }
-                    // Build a single fleet DeckBuilder object
-                    const singleFleetDeck = {
-                        version: rawDeckObj.version || 4,
-                        hqlv: rawDeckObj.hqlv || 120,
-                        f1: rawDeckObj[fleetKey],
-                        lang: 'jp',
-                        theme: theme,
-                    };
+                await clipboardy.write(markdownResult);
+                console.error('[kcyaml:SUCCESS] 変換結果をクリップボードにコピーしました。');
+                sendOsNotification('kcyaml', '変換結果をクリップボードにコピーしました！');
+            }
+            catch (err) {
+                console.error(`[kcyaml:WARNING] クリップボードへの書き込みに失敗しました: ${err.message}`);
+            }
+        }
+        // 4. Process image output independently if -g / --image is specified
+        if (options.image) {
+            console.error('\n[kcyaml:LOG] ----------------------------------------');
+            console.error('[kcyaml:LOG] 編成画像の生成処理を開始します...');
+            const theme = options.imageTheme || 'official';
+            const targetFleets = options.fleet || [1];
+            for (const fleetNum of targetFleets) {
+                const fleetKey = `f${fleetNum}`;
+                const fleetLabel = `第${fleetNum}艦隊`;
+                if (!rawDeckObj[fleetKey]) {
+                    console.error(`[kcyaml:SKIP] ${fleetLabel} のデータが存在しないためスキップします。`);
+                    continue;
+                }
+                console.error(`[kcyaml:LOG] ${fleetLabel} の画像生成を開始します (テーマ: ${theme})...`);
+                const singleFleetDeck = {
+                    version: rawDeckObj.version || 4,
+                    hqlv: rawDeckObj.hqlv || 120,
+                    f1: rawDeckObj[fleetKey],
+                    lang: 'jp',
+                    theme: theme,
+                };
+                try {
                     const imageBuffer = await generateFleetImage(singleFleetDeck, theme);
+                    console.error(`[kcyaml:LOG] ${fleetLabel} のレンダリングおよび256色軽量化が完了しました。`);
                     let imageSavePath = options.imageOutput;
                     const defaultTitle = options.title || options.fleetTitle || 'fleet';
-                    const fleetLabel = `第${fleetNum}艦隊`;
                     const defaultFilename = `${defaultTitle.replace(/[\\/:*?"<>|]/g, '_')}_${fleetLabel}_${getFormattedTimestamp()}.png`;
                     if (targetFleets.length === 1 && imageSavePath) {
-                        // Keep user specified output path if only single fleet
+                        // Keep custom output path for single fleet
                     }
                     else {
                         imageSavePath = '';
                     }
                     // Prompt via OS dialog if imageOutput is not explicitly specified and dialog is enabled
                     if (!imageSavePath && !options.noDialog) {
+                        console.error(`[kcyaml:LOG] ${fleetLabel} の保存先を指定するための OS 保存ダイアログを開きます...`);
                         const selectedPath = await promptSaveFilePath(defaultFilename);
                         if (selectedPath) {
                             imageSavePath = selectedPath;
+                            console.error(`[kcyaml:LOG] ダイアログで保存先が選択されました: ${imageSavePath}`);
+                        }
+                        else {
+                            console.error('[kcyaml:LOG] ダイアログがキャンセルされたため、デフォルトフォルダに自動保存します。');
                         }
                     }
                     // Fallback to default output folder
@@ -199,27 +223,18 @@ export async function runCli(argv) {
                         fs.mkdirSync(imgDir, { recursive: true });
                     }
                     fs.writeFileSync(imageSavePath, imageBuffer);
-                    console.error(`(編成画像 [${fleetLabel}] を256色軽量化の上 '${imageSavePath}' に保存しました)`);
+                    const sizeKb = (imageBuffer.length / 1024).toFixed(1);
+                    console.error(`[kcyaml:SUCCESS] ${fleetLabel} の画像を '${imageSavePath}' に保存しました (サイズ: ${sizeKb} KB)`);
+                }
+                catch (imgErr) {
+                    console.error(`[kcyaml:ERROR] ${fleetLabel} の画像生成・保存中にエラーが発生しました: ${imgErr.message}`);
                 }
             }
-            catch (imgErr) {
-                console.error(`(警告: 編成画像の生成・保存に失敗しました: ${imgErr.message})`);
-            }
-        }
-        console.log(markdownResult);
-        if (!options.dryRun) {
-            try {
-                await clipboardy.write(markdownResult);
-                console.error('\n(変換結果をクリップボードにコピーしました)');
-                sendOsNotification('kcyaml', '変換結果をクリップボードにコピーしました！');
-            }
-            catch (err) {
-                console.error(`\n(警告: クリップボードへの書き込みに失敗しました: ${err.message})`);
-            }
+            console.error('[kcyaml:LOG] ----------------------------------------\n');
         }
     }
     catch (err) {
-        console.error(`エラー: ${err.message}`);
+        console.error(`[kcyaml:FATAL] エラーが発生しました: ${err.message}`);
         process.exit(1);
     }
 }
