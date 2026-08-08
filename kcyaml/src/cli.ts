@@ -1,10 +1,22 @@
 import fs from 'fs';
+import { exec } from 'child_process';
 import { Command } from 'commander';
 import clipboardy from 'clipboardy';
 import { CliOptions } from './types.js';
 import { loadMasterData } from './masterData.js';
 import { parseDeckBuilder } from './parser.js';
 import { buildMarkdownOutput } from './formatter.js';
+
+function sendOsNotification(title: string, message: string): void {
+  if (process.platform === 'win32') {
+    const psCommand = `powershell -Command "Add-Type -AssemblyName System.Windows.Forms; $icon = New-Object System.Windows.Forms.NotifyIcon; $icon.Icon = [System.Drawing.SystemIcons]::Information; $icon.BalloonTipTitle = '${title}'; $icon.BalloonTipText = '${message}'; $icon.Visible = $true; $icon.ShowBalloonTip(3000)"`;
+    exec(psCommand);
+  } else if (process.platform === 'darwin') {
+    exec(`osascript -e 'display notification "${message}" with title "${title}"'`);
+  } else {
+    exec(`notify-send "${title}" "${message}"`);
+  }
+}
 
 export async function runCli(argv: string[]): Promise<void> {
   const program = new Command();
@@ -81,6 +93,7 @@ export async function runCli(argv: string[]): Promise<void> {
       try {
         await clipboardy.write(markdownResult);
         console.error('\n(変換結果をクリップボードにコピーしました)');
+        sendOsNotification('kcyaml', '変換結果をクリップボードにコピーしました！');
       } catch (err: any) {
         console.error(`\n(警告: クリップボードへの書き込みに失敗しました: ${err.message})`);
       }

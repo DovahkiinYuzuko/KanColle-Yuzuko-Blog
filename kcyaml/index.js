@@ -10,15 +10,16 @@ const __dirname = path.dirname(__filename);
 async function main() {
   const isBun = Boolean(process.versions.bun);
 
-  if (!isBun && !process.env.KCYAML_NODE_ONLY) {
+  if (!isBun && !process.env.KCYAML_SPAWNED) {
     try {
-      const cmd = process.platform === 'win32' ? 'where bun' : 'which bun';
-      execSync(cmd, { stdio: 'ignore' });
       const res = spawnSync('bun', [__filename, ...process.argv.slice(2)], {
         stdio: 'inherit',
-        env: { ...process.env, KCYAML_NODE_ONLY: '1' },
+        shell: true,
+        env: { ...process.env, KCYAML_SPAWNED: '1' },
       });
-      if (res.status === 0) process.exit(0);
+      if (res.status === 0) {
+        process.exit(0);
+      }
     } catch {}
   }
 
