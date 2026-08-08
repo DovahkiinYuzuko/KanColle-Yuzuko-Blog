@@ -3,15 +3,47 @@ import canvasPkg from 'canvas';
 const { createCanvas, Image, loadImage } = canvasPkg;
 import sharp from 'sharp';
 import { generate } from 'gkcoi';
-// Minimal dummy start2.json object for gkcoi initialization fallback
-const DUMMY_START2_DATA = {
+// Saved original node fetch function
+const nativeNodeFetch = globalThis.fetch;
+// Fast embedded start2 fallback data for offline / instantaneous rendering
+const FAST_START2_DATA = {
     api_mst_ship: [
-        { api_id: 1, api_name: '睦月', api_yomi: 'むつき', api_stype: 2, api_ctype: 1, api_slot_num: 3, api_leng: 1, api_soku: 10, api_maxeq: [1, 1, 0, 0, 0] }
+        { api_id: 1, api_name: '睦月', api_yomi: 'むつき', api_stype: 2, api_ctype: 1, api_slot_num: 3, api_leng: 1, api_soku: 10, api_maxeq: [1, 1, 0, 0, 0] },
+        { api_id: 194, api_name: '羽黒改二', api_yomi: 'はぐろ', api_stype: 5, api_ctype: 6, api_slot_num: 5, api_leng: 2, api_soku: 10, api_maxeq: [2, 2, 2, 2, 0] },
     ],
     api_mst_slotitem: [
-        { api_id: 1, api_name: '12.7cm連装砲', api_type: [1, 1, 1, 1, 0], api_houg: 2, api_raig: 0, api_baku: 0, api_souk: 0, api_tyku: 1, api_houk: 0, api_houm: 0, api_tais: 0, api_saku: 0, api_leng: 1 }
+        { api_id: 1, api_name: '12.7cm連装砲', api_type: [1, 1, 1, 1, 0], api_houg: 2, api_raig: 0, api_baku: 0, api_souk: 0, api_tyku: 1, api_houk: 0, api_houm: 0, api_tais: 0, api_saku: 0, api_leng: 1 },
     ]
 };
+// Cached start2 JSON response to prevent repeated network delays
+let cachedStart2Json = null;
+async function getFullStart2Data() {
+    if (cachedStart2Json) {
+        return cachedStart2Json;
+    }
+    const start2Urls = [
+        'https://raw.githubusercontent.com/Nishisonic/gkcoi/master/start2.json',
+        'https://raw.githubusercontent.com/Nishisonic/gkcoi/main/start2.json',
+    ];
+    for (const url of start2Urls) {
+        try {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 2000);
+            const res = await nativeNodeFetch(url, { signal: controller.signal });
+            clearTimeout(timeout);
+            if (res.ok) {
+                const json = await res.json();
+                if (json && Array.isArray(json.api_mst_ship) && json.api_mst_ship.length > 0) {
+                    cachedStart2Json = json;
+                    return json;
+                }
+            }
+        }
+        catch (e) { }
+    }
+    cachedStart2Json = FAST_START2_DATA;
+    return FAST_START2_DATA;
+}
 /**
  * Global DOM Polyfill setup for running gkcoi in Node.js environment
  */
@@ -31,37 +63,88 @@ function ensureDomEnvironment() {
             configurable: true,
         });
     }
-    catch (e) {
-        // Ignore if navigator is already set
-    }
-    // Intercept fetch for start2.json & timeout protection
-    const origFetch = globalThis.fetch;
+    catch (e) { }
+    // Intercept fetch for start2.json with Proxy safety net for missing ships and items
     globalThis.fetch = async function (input, init) {
-        const urlStr = typeof input === 'string' ? input : (input && input.url ? input.url : String(input));
+        const urlStr = typeof input === 'string' ? input : input?.url ? input.url : String(input);
         if (urlStr.includes('start2.json')) {
-            try {
-                const controller = new AbortController();
-                const timeout = setTimeout(() => controller.abort(), 3000);
-                const res = await origFetch(input, { ...init, signal: controller.signal });
-                clearTimeout(timeout);
-                if (res.ok) {
-                    const text = await res.clone().text();
-                    if (text.startsWith('{')) {
-                        return res;
-                    }
-                }
-            }
-            catch (err) { }
-            // Return dummy start2 JSON response on network error or invalid JSON response
-            return new Response(JSON.stringify(DUMMY_START2_DATA), {
+            const fullData = await getFullStart2Data();
+            const res = new Response(JSON.stringify(fullData), {
                 status: 200,
                 headers: { 'Content-Type': 'application/json' },
             });
+            res.json = async () => {
+                const data = JSON.parse(JSON.stringify(fullData));
+                data.api_mst_ship = new Proxy(data.api_mst_ship || [], {
+                    get(target, prop) {
+                        if (prop === 'reduce') {
+                            return function (callback, initialValue) {
+                                const map = target.reduce(callback, initialValue);
+                                return new Proxy(map, {
+                                    get(mapTarget, shipId) {
+                                        const key = String(shipId);
+                                        if (key in mapTarget) {
+                                            return mapTarget[key];
+                                        }
+                                        return {
+                                            api_id: Number(key) || 1,
+                                            api_name: `艦娘(ID:${key})`,
+                                            api_yomi: '',
+                                            api_stype: 2,
+                                            api_ctype: 1,
+                                            api_slot_num: 5,
+                                            api_leng: 1,
+                                            api_soku: 10,
+                                            api_maxeq: [1, 1, 1, 1, 1],
+                                        };
+                                    },
+                                });
+                            };
+                        }
+                        return target[prop];
+                    },
+                });
+                data.api_mst_slotitem = new Proxy(data.api_mst_slotitem || [], {
+                    get(target, prop) {
+                        if (prop === 'reduce') {
+                            return function (callback, initialValue) {
+                                const map = target.reduce(callback, initialValue);
+                                return new Proxy(map, {
+                                    get(mapTarget, itemId) {
+                                        const key = String(itemId);
+                                        if (key in mapTarget) {
+                                            return mapTarget[key];
+                                        }
+                                        return {
+                                            api_id: Number(key) || 1,
+                                            api_name: `装備(ID:${key})`,
+                                            api_type: [1, 1, 1, 1, 0],
+                                            api_houg: 0,
+                                            api_raig: 0,
+                                            api_baku: 0,
+                                            api_souk: 0,
+                                            api_tyku: 0,
+                                            api_houk: 0,
+                                            api_houm: 0,
+                                            api_tais: 0,
+                                            api_saku: 0,
+                                            api_leng: 1,
+                                        };
+                                    },
+                                });
+                            };
+                        }
+                        return target[prop];
+                    },
+                });
+                return data;
+            };
+            return res;
         }
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 4000);
+        const timeout = setTimeout(() => controller.abort(), 2000);
         try {
-            const res = await origFetch(input, { ...init, signal: controller.signal });
+            const res = await nativeNodeFetch(input, { ...init, signal: controller.signal });
             clearTimeout(timeout);
             return res;
         }
@@ -79,6 +162,20 @@ function ensureDomEnvironment() {
         if (tag === 'img') {
             const img = new Image();
             let _src = '';
+            let _onload = null;
+            let _isLoaded = false;
+            Object.defineProperty(img, 'onload', {
+                get() {
+                    return _onload;
+                },
+                set(fn) {
+                    _onload = fn;
+                    if (_isLoaded && typeof fn === 'function') {
+                        process.nextTick(() => fn());
+                    }
+                },
+                configurable: true,
+            });
             Object.defineProperty(img, 'src', {
                 get() {
                     return _src;
@@ -88,34 +185,31 @@ function ensureDomEnvironment() {
                     if (!val)
                         return;
                     let handled = false;
-                    const fallback = () => {
+                    const markComplete = (loadedImg) => {
                         if (handled)
                             return;
                         handled = true;
-                        const blank = createCanvas(1, 1);
-                        loadImage(blank.toDataURL()).then((bImg) => {
-                            Object.assign(img, bImg);
-                            if (img.onload)
-                                img.onload();
-                        }).catch(() => {
-                            if (img.onload)
-                                img.onload();
-                        });
+                        _isLoaded = true;
+                        if (loadedImg) {
+                            Object.assign(img, loadedImg);
+                        }
+                        if (typeof _onload === 'function') {
+                            _onload();
+                        }
                     };
-                    const timeout = setTimeout(fallback, 2000);
+                    const timeout = setTimeout(() => {
+                        const blank = createCanvas(1, 1);
+                        loadImage(blank.toDataURL()).then(markComplete).catch(() => markComplete());
+                    }, 300);
                     loadImage(val)
                         .then((loadedImg) => {
-                        if (!handled) {
-                            handled = true;
-                            clearTimeout(timeout);
-                            Object.assign(img, loadedImg);
-                            if (img.onload)
-                                img.onload();
-                        }
+                        clearTimeout(timeout);
+                        markComplete(loadedImg);
                     })
                         .catch(() => {
                         clearTimeout(timeout);
-                        fallback();
+                        const blank = createCanvas(1, 1);
+                        loadImage(blank.toDataURL()).then(markComplete).catch(() => markComplete());
                     });
                 },
                 configurable: true,

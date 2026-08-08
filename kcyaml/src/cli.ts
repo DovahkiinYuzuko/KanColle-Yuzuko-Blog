@@ -168,42 +168,69 @@ export async function runCli(argv: string[]): Promise<void> {
       try {
         console.error('\n(編成画像を生成中...)');
         const theme = options.imageTheme || 'official';
-        const imageBuffer = await generateFleetImage(rawDeckObj, theme);
+        const targetFleets = options.fleet || [1];
 
-        let imageSavePath = options.imageOutput;
-
-        // Prompt via OS dialog if imageOutput is not explicitly specified and dialog is enabled
-        if (!imageSavePath && !options.noDialog) {
-          const defaultTitle = options.title || options.fleetTitle || 'fleet_composition';
-          const defaultFilename = `${defaultTitle.replace(/[\\/:*?"<>|]/g, '_')}_${getFormattedTimestamp()}.png`;
-          const selectedPath = await promptSaveFilePath(defaultFilename);
-          if (selectedPath) {
-            imageSavePath = selectedPath;
+        for (const fleetNum of targetFleets) {
+          const fleetKey = `f${fleetNum}`;
+          if (!rawDeckObj[fleetKey]) {
+            continue;
           }
-        }
 
-        // Fallback to default output folder if dialog was canceled or disabled
-        if (!imageSavePath) {
-          const dirPath = path.join(process.cwd(), 'kcdata-output');
-          if (!fs.existsSync(dirPath)) {
-            fs.mkdirSync(dirPath, { recursive: true });
+          // Build a single fleet DeckBuilder object
+          const singleFleetDeck = {
+            version: rawDeckObj.version || 4,
+            hqlv: rawDeckObj.hqlv || 120,
+            f1: rawDeckObj[fleetKey],
+            lang: 'jp' as any,
+            theme: theme as any,
+          };
+
+
+
+
+          const imageBuffer = await generateFleetImage(singleFleetDeck, theme);
+
+          let imageSavePath = options.imageOutput;
+          const defaultTitle = options.title || options.fleetTitle || 'fleet';
+          const fleetLabel = `第${fleetNum}艦隊`;
+          const defaultFilename = `${defaultTitle.replace(/[\\/:*?"<>|]/g, '_')}_${fleetLabel}_${getFormattedTimestamp()}.png`;
+
+          if (targetFleets.length === 1 && imageSavePath) {
+            // Keep user specified output path if only single fleet
+          } else {
+            imageSavePath = '';
           }
-          const defaultTitle = options.title || options.fleetTitle || 'fleet_composition';
-          const filename = `${defaultTitle.replace(/[\\/:*?"<>|]/g, '_')}_${getFormattedTimestamp()}.png`;
-          imageSavePath = path.join(dirPath, filename);
-        }
 
-        const imgDir = path.dirname(imageSavePath);
-        if (!fs.existsSync(imgDir)) {
-          fs.mkdirSync(imgDir, { recursive: true });
-        }
+          // Prompt via OS dialog if imageOutput is not explicitly specified and dialog is enabled
+          if (!imageSavePath && !options.noDialog) {
+            const selectedPath = await promptSaveFilePath(defaultFilename);
+            if (selectedPath) {
+              imageSavePath = selectedPath;
+            }
+          }
 
-        fs.writeFileSync(imageSavePath, imageBuffer);
-        console.error(`(編成画像を256色軽量化の上 '${imageSavePath}' に保存しました)`);
+          // Fallback to default output folder
+          if (!imageSavePath) {
+            const dirPath = path.join(process.cwd(), 'kcdata-output');
+            if (!fs.existsSync(dirPath)) {
+              fs.mkdirSync(dirPath, { recursive: true });
+            }
+            imageSavePath = path.join(dirPath, defaultFilename);
+          }
+
+          const imgDir = path.dirname(imageSavePath);
+          if (!fs.existsSync(imgDir)) {
+            fs.mkdirSync(imgDir, { recursive: true });
+          }
+
+          fs.writeFileSync(imageSavePath, imageBuffer);
+          console.error(`(編成画像 [${fleetLabel}] を256色軽量化の上 '${imageSavePath}' に保存しました)`);
+        }
       } catch (imgErr: any) {
         console.error(`(警告: 編成画像の生成・保存に失敗しました: ${imgErr.message})`);
       }
     }
+
 
     console.log(markdownResult);
 
