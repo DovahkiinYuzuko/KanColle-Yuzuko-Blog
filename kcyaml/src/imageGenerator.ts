@@ -1,4 +1,4 @@
-import puppeteer from 'puppeteer-core';
+import puppeteer, { type ConsoleMessage } from 'puppeteer-core';
 import sharp from 'sharp';
 import * as esbuild from 'esbuild';
 import { DeckBuilder } from 'gkcoi';
@@ -32,7 +32,7 @@ async function getGkcoiBrowserBundle(): Promise<string> {
   });
 
   cachedGkcoiBundleJs = result.outputFiles[0].text;
-  return cachedGkcoiBundleJs;
+  return cachedGkcoiBundleJs!;
 }
 
 /**
@@ -80,7 +80,7 @@ export async function generateFleetImage(
     await page.setViewport({ width: 1200, height: 900 });
 
     if (config.logging.showBrowserLogs) {
-      page.on('console', (msg) => {
+      page.on('console', (msg: ConsoleMessage) => {
         console.error(`[kcyaml:BROWSER] ${msg.type().toUpperCase()}: ${msg.text()}`);
       });
     }
@@ -267,7 +267,7 @@ export async function generateFleetImage(
     const passUrls = isCustomUrls ? config.urls : null;
 
     // First Attempt: execute rendering with current url settings
-    await page.evaluate((data, urls) => {
+    await page.evaluate((data: any, urls: any) => {
       (window as any).startRender(data, urls);
     }, deckDataWithTheme, passUrls);
 

@@ -7,6 +7,7 @@ exports:
   - generateFleetImage
 imports:
   - "kcyaml/src/browserDetector.ts"
+  - "kcyaml/src/configManager.ts"
 ---
 
 # `imageGenerator.ts` Specification
