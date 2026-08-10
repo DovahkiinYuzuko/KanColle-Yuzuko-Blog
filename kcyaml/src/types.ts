@@ -3,6 +3,8 @@ export interface MasterShip {
   type?: number;
   stype?: number;
   saku?: [number, number]; // [min, max]
+  minScout?: number;
+  maxScout?: number;
   maxeq?: number[];
 }
 
@@ -10,6 +12,7 @@ export interface MasterItem {
   name: string;
   taiku?: number;
   saku?: number;
+  itype?: number;
   type?: number[]; // [api_type[0], api_type[1], api_type[2], api_type[3]]
 }
 

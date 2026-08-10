@@ -1,22 +1,9 @@
-// 装備カテゴリID (api_type[2] または api_type[3])
-const TYPE_KAN_SEN = 6; // 艦上戦闘機
-const TYPE_KAN_BAKU = 7; // 艦上爆撃機
-const TYPE_KAN_KO = 8; // 艦上攻撃機
-const TYPE_KAN_SAKU = 9; // 艦上偵察機
-const TYPE_SUI_SAKU = 10; // 水上偵察機
-const TYPE_SUI_BAKU = 11; // 水上爆撃機
-const TYPE_SMALL_RADAR = 12; // 小型電探
-const TYPE_LARGE_RADAR = 13; // 大型電探
-const TYPE_RIKU_KOU = 25; // 陸上攻撃機
-const TYPE_RIKU_SEN = 26; // 陸上戦闘機 / 局地戦闘機
-const TYPE_SUI_SEN = 45; // 水上戦闘機
-const TYPE_KYOKU_SEN = 48; // 局地戦闘機
 function getItemCategory(item) {
+    if (item.itype !== undefined && item.itype > 0) {
+        return item.itype;
+    }
     if (item.type && item.type.length >= 3) {
         return item.type[2];
-    }
-    if (item.type && item.type.length >= 4) {
-        return item.type[3];
     }
     return 0;
 }
@@ -26,16 +13,16 @@ function getItemCategory(item) {
 function getAaRefitBonus(category, rf, item) {
     if (!rf || rf <= 0)
         return 0;
-    // 艦戦, 水戦, 陸戦, 局戦
-    if ([TYPE_KAN_SEN, TYPE_SUI_SEN, TYPE_RIKU_SEN, TYPE_KYOKU_SEN].includes(category)) {
+    // 艦戦(6), 水戦(45), 陸戦(26), 局戦(48)
+    if ([6, 45, 26, 48].includes(category)) {
         return 0.2 * rf;
     }
     // 対空値を持つ艦爆 (爆戦など)
-    if (category === TYPE_KAN_BAKU && (item.taiku ?? 0) > 0) {
+    if (category === 7 && (item.taiku ?? 0) > 0) {
         return 0.25 * rf;
     }
-    // 陸攻
-    if (category === TYPE_RIKU_KOU) {
+    // 陸攻(25)
+    if (category === 25) {
         return 0.5 * Math.sqrt(rf);
     }
     return 0;
@@ -46,10 +33,9 @@ function getAaRefitBonus(category, rf, item) {
 function getProficiencyBonus(category, mas) {
     if (!mas || mas <= 0)
         return 0;
-    // 熟練度レベルテーブル (mas 1〜7)
-    const isFighter = [TYPE_KAN_SEN, TYPE_SUI_SEN, TYPE_RIKU_SEN, TYPE_KYOKU_SEN].includes(category);
-    const isSeaplaneBomber = category === TYPE_SUI_BAKU;
-    const isAttackerOrBomber = [TYPE_KAN_KO, TYPE_KAN_BAKU, TYPE_RIKU_KOU].includes(category);
+    const isFighter = [6, 45, 26, 48].includes(category);
+    const isSeaplaneBomber = category === 11;
+    const isAttackerOrBomber = [8, 7, 25].includes(category);
     if (isFighter) {
         const table = [0, 1, 4, 6, 9, 14, 14, 25];
         return table[Math.min(mas, 7)] || 0;
@@ -75,28 +61,16 @@ export function calculateSlotFighterPower(itemId, rf, mas, slotCapacity, masterD
         return 0;
     const category = getItemCategory(item);
     const rawAa = item.taiku ?? 0;
-    // 制空に関与する装備タイプか確認
-    const isAirEquip = [
-        TYPE_KAN_SEN,
-        TYPE_KAN_BAKU,
-        TYPE_KAN_KO,
-        TYPE_SUI_SAKU,
-        TYPE_SUI_BAKU,
-        TYPE_RIKU_KOU,
-        TYPE_RIKU_SEN,
-        TYPE_SUI_SEN,
-        TYPE_KYOKU_SEN,
-    ].includes(category);
+    const isAirEquip = [6, 7, 8, 9, 10, 11, 25, 26, 45, 48].includes(category);
     if (!isAirEquip || rawAa <= 0) {
-        if (![TYPE_KAN_SEN, TYPE_SUI_SEN, TYPE_RIKU_SEN, TYPE_KYOKU_SEN].includes(category)) {
+        if (![6, 45, 26, 48].includes(category)) {
             return 0;
         }
     }
     const aaBonus = getAaRefitBonus(category, rf ?? 0, item);
     const totalAa = rawAa + aaBonus;
     const profBonus = getProficiencyBonus(category, mas ?? 0);
-    const fp = Math.floor(totalAa * Math.sqrt(slotCapacity) + profBonus);
-    return fp;
+    return Math.floor(totalAa * Math.sqrt(slotCapacity) + profBonus);
 }
 /**
  * 艦隊の合計制空値を計算
@@ -122,24 +96,56 @@ export function calculateFleetFighterPower(ships, masterData) {
     return total;
 }
 /**
- * 艦娘の推定素索敵値を計算
+ * 艦娘の素索敵値を計算 (作戦室/Jervis準拠)
  */
 function getShipRawSaku(shipObj, masterData) {
     if (!shipObj || !shipObj.id)
         return 0;
     const masterShip = masterData.ships[shipObj.id] || masterData.ships[String(shipObj.id)];
     const level = shipObj.lv || 1;
-    let minSaku = 0;
-    let maxSaku = 0;
-    if (masterShip && masterShip.saku && Array.isArray(masterShip.saku)) {
-        minSaku = masterShip.saku[0] || 0;
-        maxSaku = masterShip.saku[1] || 0;
-    }
-    if (maxSaku === 0)
+    if (!masterShip)
         return 0;
-    // 線形補間: Math.floor(min + (max - min) * (level / 99))
-    const estimated = Math.floor(minSaku + (maxSaku - minSaku) * (level / 99));
-    return estimated;
+    const minScout = masterShip.minScout ?? 0;
+    const maxScout = masterShip.maxScout ?? 0;
+    if (maxScout === 0)
+        return 0;
+    if (level === 99) {
+        return maxScout;
+    }
+    return Math.floor((maxScout - minScout) * (level / 99) + minScout);
+}
+/**
+ * 改修による索敵加算ボーナス (bonusScout)
+ */
+function getBonusScout(category, rf) {
+    if (!rf || rf <= 0)
+        return 0;
+    const sqRf = Math.sqrt(rf);
+    if (category === 12)
+        return 1.25 * sqRf; // 小型電探
+    if (category === 13)
+        return 1.4 * sqRf; // 大型電探
+    if (category === 10)
+        return 1.2 * sqRf; // 水上偵察機
+    if (category === 11)
+        return 1.15 * sqRf; // 水上爆撃機
+    if (category === 9)
+        return 1.2 * sqRf; // 艦上偵察機
+    return 0;
+}
+/**
+ * 装備の索敵係数
+ */
+function getItemScoutCoefficient(category) {
+    if (category === 8)
+        return 0.8; // 艦攻
+    if (category === 9)
+        return 1.0; // 艦偵
+    if (category === 10)
+        return 1.2; // 水偵
+    if (category === 11)
+        return 1.1; // 水爆
+    return 0.6; // その他全装備
 }
 /**
  * 33式分岐点係数の索敵スコアを計算 (C1, C2, C3, C4)
@@ -163,41 +169,11 @@ export function calculateFleetSaku33(ships, hqlv = 120, masterData) {
                 if (!masterItem)
                     continue;
                 const category = getItemCategory(masterItem);
-                const itemSaku = masterItem.saku ?? 0;
+                const rawItemSaku = masterItem.saku ?? 0;
                 const rf = itemObj.rf ?? 0;
-                let equipCoeff = 0.6; // デフォルト 0.6
-                let refitCoeff = 0.0; // デフォルト 0.0
-                switch (category) {
-                    case TYPE_SUI_SAKU: // 水上偵察機
-                        equipCoeff = 1.2;
-                        refitCoeff = 1.2;
-                        break;
-                    case TYPE_SUI_BAKU: // 水上爆撃機
-                        equipCoeff = 1.1;
-                        refitCoeff = 1.15;
-                        break;
-                    case TYPE_KAN_SAKU: // 艦上偵察機
-                        equipCoeff = 1.0;
-                        refitCoeff = 1.2;
-                        break;
-                    case TYPE_KAN_KO: // 艦上攻撃機
-                        equipCoeff = 0.8;
-                        refitCoeff = 0.0;
-                        break;
-                    case TYPE_SMALL_RADAR: // 小型電探
-                        equipCoeff = 0.6;
-                        refitCoeff = 1.25;
-                        break;
-                    case TYPE_LARGE_RADAR: // 大型電探
-                        equipCoeff = 0.6;
-                        refitCoeff = 1.4;
-                        break;
-                    default:
-                        equipCoeff = 0.6;
-                        refitCoeff = 0.0;
-                        break;
-                }
-                const score = equipCoeff * (itemSaku + refitCoeff * Math.sqrt(rf));
+                const bonusScout = getBonusScout(category, rf);
+                const coeff = getItemScoutCoefficient(category);
+                const score = (rawItemSaku + bonusScout) * coeff;
                 equipScoreTotal += score;
             }
         }
