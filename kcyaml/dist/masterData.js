@@ -47,27 +47,29 @@ function buildMasterMaps(rawStart2) {
     const rootData = rawStart2?.api_data || rawStart2;
     if (rootData && Array.isArray(rootData.api_mst_ship)) {
         for (const s of rootData.api_mst_ship) {
-            if (s && s.api_id && s.api_name) {
-                ships[String(s.api_id)] = { name: s.api_name };
-            }
-            else if (s && s.id && s.api_name) {
-                ships[String(s.id)] = { name: s.api_name };
-            }
-            else if (s && s.id && s.name) {
-                ships[String(s.id)] = { name: s.name };
+            const id = s.api_id || s.id;
+            const name = s.api_name || s.name;
+            if (id && name) {
+                ships[String(id)] = {
+                    name,
+                    stype: s.api_stype ?? s.stype,
+                    saku: Array.isArray(s.api_saku) ? [s.api_saku[0], s.api_saku[1]] : s.saku,
+                    maxeq: s.api_maxeq ?? s.maxeq,
+                };
             }
         }
     }
     if (rootData && Array.isArray(rootData.api_mst_slotitem)) {
         for (const i of rootData.api_mst_slotitem) {
-            if (i && i.api_id && i.api_name) {
-                items[String(i.api_id)] = { name: i.api_name };
-            }
-            else if (i && i.id && i.api_name) {
-                items[String(i.id)] = { name: i.api_name };
-            }
-            else if (i && i.id && i.name) {
-                items[String(i.id)] = { name: i.name };
+            const id = i.api_id || i.id;
+            const name = i.api_name || i.name;
+            if (id && name) {
+                items[String(id)] = {
+                    name,
+                    taiku: i.api_tyku ?? i.tyku ?? 0,
+                    saku: i.api_saku ?? i.saku ?? 0,
+                    type: i.api_type ?? i.type,
+                };
             }
         }
     }

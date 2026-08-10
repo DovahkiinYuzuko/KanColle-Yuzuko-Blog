@@ -1,3 +1,4 @@
+import { calculateFleetFighterPower, calculateFleetSaku33 } from './calculator.js';
 const MODE_MAP = {
     0: '待機',
     1: '出撃',
@@ -27,6 +28,7 @@ export function parseDeckBuilder(jsonText, options, masterData) {
         fleets: [],
         airBases: [],
     };
+    const hqlv = rawData.hqlv || 120;
     if (options.fleet && Array.isArray(options.fleet)) {
         for (const num of options.fleet) {
             const fleetKey = `f${num}`;
@@ -34,11 +36,13 @@ export function parseDeckBuilder(jsonText, options, masterData) {
             if (!fleetObj || typeof fleetObj !== 'object')
                 continue;
             const ships = [];
+            const rawShips = [];
             for (let sIdx = 1; sIdx <= 7; sIdx++) {
                 const shipKey = `s${sIdx}`;
                 const shipObj = fleetObj[shipKey];
                 if (!shipObj || !shipObj.id)
                     continue;
+                rawShips.push(shipObj);
                 const shipInfo = masterData.ships[shipObj.id] || masterData.ships[String(shipObj.id)];
                 const shipName = shipInfo ? shipInfo.name : `Unknown Ship (ID: ${shipObj.id})`;
                 const level = shipObj.lv || 1;
@@ -64,12 +68,18 @@ export function parseDeckBuilder(jsonText, options, masterData) {
                     name: shipName,
                     level,
                     equipments,
+                    id: shipObj.id,
+                    rawShipObj: shipObj,
                 });
             }
             if (ships.length > 0) {
+                const fighterPower = calculateFleetFighterPower(rawShips, masterData);
+                const saku33 = calculateFleetSaku33(rawShips, hqlv, masterData);
                 result.fleets.push({
                     number: num,
                     ships,
+                    fighterPower,
+                    saku33,
                 });
             }
         }

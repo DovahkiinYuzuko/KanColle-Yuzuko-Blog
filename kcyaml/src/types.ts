@@ -1,10 +1,16 @@
 export interface MasterShip {
   name: string;
   type?: number;
+  stype?: number;
+  saku?: [number, number]; // [min, max]
+  maxeq?: number[];
 }
 
 export interface MasterItem {
   name: string;
+  taiku?: number;
+  saku?: number;
+  type?: number[]; // [api_type[0], api_type[1], api_type[2], api_type[3]]
 }
 
 export interface MasterData {
@@ -42,11 +48,20 @@ export interface ParsedShip {
   name: string;
   level: number;
   equipments: string[];
+  id?: number;
+  rawShipObj?: DeckBuilderShip;
 }
 
 export interface ParsedFleet {
   number: number;
   ships: ParsedShip[];
+  fighterPower?: number;
+  saku33?: {
+    c1: number;
+    c2: number;
+    c3: number;
+    c4: number;
+  };
 }
 
 export interface ParsedAirBase {

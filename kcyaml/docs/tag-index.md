@@ -50,7 +50,9 @@
 ### `@KcYamlConfigManager`
 * **Description:** Configuration loader, default values merger, and template initializer for config.json.
 * **Usage:**
-  * [kcyaml/docs/variables'n'functions/[TypeScript]configManager.md](file:///c:/Users/rikui/Documents/艦これ/kcyaml/docs/variables'n'functions/[TypeScript]configManager.md)
+  * [docs/variables'n'functions/[TypeScript]configManager.md](file:///C:/Users/rikui/Documents/艦これ/kcyaml/docs/variables'n'functions/[TypeScript]configManager.md)
 
-
-
+### `@KcYamlCalculator`
+* **Description:** Calculation engine for Fighter Power and Formula 33 Effective Search Power.
+* **Usage:**
+  * [docs/variables'n'functions/[TypeScript]calculator.md](file:///C:/Users/rikui/Documents/艦これ/kcyaml/docs/variables'n'functions/[TypeScript]calculator.md)

@@ -48,6 +48,21 @@ export function buildMarkdownOutput(parsedData: ParsedData, options: CliOptions)
       }
       lines.push('```');
       lines.push('');
+
+      if (fleet.fighterPower !== undefined) {
+        lines.push(`- **制空値:** ${fleet.fighterPower}`);
+      }
+      if (fleet.saku33 !== undefined) {
+        lines.push('- **33式分岐点係数:**');
+        lines.push('');
+        lines.push('|番号|係数|');
+        lines.push('|:---:|---|');
+        lines.push(`|1|${fleet.saku33.c1.toFixed(2)}|`);
+        lines.push(`|2|${fleet.saku33.c2.toFixed(2)}|`);
+        lines.push(`|3|${fleet.saku33.c3.toFixed(2)}|`);
+        lines.push(`|4|${fleet.saku33.c4.toFixed(2)}|`);
+      }
+      lines.push('');
     }
   }
 
