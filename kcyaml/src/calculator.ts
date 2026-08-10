@@ -1,13 +1,13 @@
 import { DeckBuilderShip, MasterData, MasterItem } from './types.js';
 
 function getItemCategory(item: MasterItem): number {
-  if (item.itype !== undefined && item.itype > 0) {
-    return item.itype;
+  if (item.typeId !== undefined && item.typeId > 0) {
+    return item.typeId;
   }
   if (item.type && item.type.length >= 3) {
     return item.type[2];
   }
-  return 0;
+  return item.itype ?? 0;
 }
 
 /**

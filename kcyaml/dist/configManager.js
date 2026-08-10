@@ -3,6 +3,7 @@ import path from 'path';
 export const DEFAULT_CONFIG = {
     urls: {
         start2Url: 'https://raw.githubusercontent.com/Nishisonic/gkcoi/master/static/START2.json',
+        masterJsonUrl: 'https://firebasestorage.googleapis.com/v0/b/development-74af0.appspot.com/o/master.json?alt=media',
         shipUrl: 'https://raw.githubusercontent.com/Nishisonic/gkcoi/master',
         masterUrl: 'https://raw.githubusercontent.com/Nishisonic/gkcoi/master',
     },

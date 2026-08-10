@@ -12,8 +12,9 @@ export interface MasterItem {
   name: string;
   taiku?: number;
   saku?: number;
-  itype?: number;
-  type?: number[]; // [api_type[0], api_type[1], api_type[2], api_type[3]]
+  typeId?: number; // apiTypeId (type)
+  itype?: number;  // iconTypeId
+  type?: number[];
 }
 
 export interface MasterData {
@@ -81,6 +82,7 @@ export interface ParsedData {
 export interface KcYamlConfig {
   urls: {
     start2Url: string;
+    masterJsonUrl?: string;
     shipUrl: string;
     masterUrl: string;
   };

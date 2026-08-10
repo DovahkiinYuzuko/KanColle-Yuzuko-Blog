@@ -1,11 +1,11 @@
 function getItemCategory(item) {
-    if (item.itype !== undefined && item.itype > 0) {
-        return item.itype;
+    if (item.typeId !== undefined && item.typeId > 0) {
+        return item.typeId;
     }
     if (item.type && item.type.length >= 3) {
         return item.type[2];
     }
-    return 0;
+    return item.itype ?? 0;
 }
 /**
  * 装備の対空改修ボーナス (☆加算値)
