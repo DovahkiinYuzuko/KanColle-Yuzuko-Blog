@@ -1,3 +1,4 @@
+import { Decimal } from 'decimal.js';
 function getItemCategory(item) {
     if (item.typeId !== undefined && item.typeId > 0) {
         return item.typeId;
@@ -12,20 +13,20 @@ function getItemCategory(item) {
  */
 function getAaRefitBonus(category, rf, item) {
     if (!rf || rf <= 0)
-        return 0;
+        return new Decimal(0);
     // 艦戦(6), 水戦(45), 陸戦(26), 局戦(48)
     if ([6, 45, 26, 48].includes(category)) {
-        return 0.2 * rf;
+        return new Decimal(0.2).mul(rf);
     }
     // 対空値を持つ艦爆 (爆戦など)
     if (category === 7 && (item.taiku ?? 0) > 0) {
-        return 0.25 * rf;
+        return new Decimal(0.25).mul(rf);
     }
     // 陸攻(25)
     if (category === 25) {
-        return 0.5 * Math.sqrt(rf);
+        return new Decimal(0.5).mul(Decimal.sqrt(rf));
     }
-    return 0;
+    return new Decimal(0);
 }
 /**
  * 熟練度 (mas) ボーナス
@@ -67,10 +68,11 @@ export function calculateSlotFighterPower(itemId, rf, mas, slotCapacity, masterD
             return 0;
         }
     }
-    const aaBonus = getAaRefitBonus(category, rf ?? 0, item);
-    const totalAa = rawAa + aaBonus;
+    const aaBonusDec = getAaRefitBonus(category, rf ?? 0, item);
+    const totalAaDec = new Decimal(rawAa).add(aaBonusDec);
     const profBonus = getProficiencyBonus(category, mas ?? 0);
-    return Math.floor(totalAa * Math.sqrt(slotCapacity) + profBonus);
+    const fpDec = totalAaDec.mul(Decimal.sqrt(slotCapacity)).add(profBonus);
+    return fpDec.floor().toNumber();
 }
 /**
  * 艦隊の合計制空値を計算
@@ -96,70 +98,72 @@ export function calculateFleetFighterPower(ships, masterData) {
     return total;
 }
 /**
- * 艦娘の素索敵値を計算 (作戦室/Jervis準拠)
+ * 艦娘の素索敵値を計算 (作戦室/Jervis/シミュレーター公式)
  */
 function getShipRawSaku(shipObj, masterData) {
     if (!shipObj || !shipObj.id)
-        return 0;
+        return new Decimal(0);
     const masterShip = masterData.ships[shipObj.id] || masterData.ships[String(shipObj.id)];
     const level = shipObj.lv || 1;
     if (!masterShip)
-        return 0;
+        return new Decimal(0);
     const minScout = masterShip.minScout ?? 0;
     const maxScout = masterShip.maxScout ?? 0;
     if (maxScout === 0)
-        return 0;
+        return new Decimal(0);
     if (level === 99) {
-        return maxScout;
+        return new Decimal(maxScout);
     }
-    return Math.floor((maxScout - minScout) * (level / 99) + minScout);
+    const diff = maxScout - minScout;
+    const val = new Decimal(diff).mul(level).div(99).add(minScout);
+    return val.floor();
 }
 /**
  * 改修による索敵加算ボーナス (bonusScout)
  */
 function getBonusScout(category, rf) {
     if (!rf || rf <= 0)
-        return 0;
-    const sqRf = Math.sqrt(rf);
+        return new Decimal(0);
+    const sqRf = Decimal.sqrt(rf);
     if (category === 12)
-        return 1.25 * sqRf; // 小型電探
+        return new Decimal(1.25).mul(sqRf); // 小型電探
     if (category === 13)
-        return 1.4 * sqRf; // 大型電探
+        return new Decimal(1.4).mul(sqRf); // 大型電探
     if (category === 10)
-        return 1.2 * sqRf; // 水上偵察機
+        return new Decimal(1.2).mul(sqRf); // 水上偵察機
     if (category === 11)
-        return 1.15 * sqRf; // 水上爆撃機
+        return new Decimal(1.15).mul(sqRf); // 水上爆撃機
     if (category === 9)
-        return 1.2 * sqRf; // 艦上偵察機
-    return 0;
+        return new Decimal(1.2).mul(sqRf); // 艦上偵察機
+    return new Decimal(0);
 }
 /**
  * 装備の索敵係数
  */
 function getItemScoutCoefficient(category) {
     if (category === 8)
-        return 0.8; // 艦攻
+        return new Decimal(0.8); // 艦攻
     if (category === 9)
-        return 1.0; // 艦偵
+        return new Decimal(1.0); // 艦偵
     if (category === 10)
-        return 1.2; // 水偵
+        return new Decimal(1.2); // 水偵
     if (category === 11)
-        return 1.1; // 水爆
-    return 0.6; // その他全装備
+        return new Decimal(1.1); // 水爆
+    return new Decimal(0.6); // その他全装備
 }
 /**
  * 33式分岐点係数の索敵スコアを計算 (C1, C2, C3, C4)
  */
 export function calculateFleetSaku33(ships, hqlv = 120, masterData) {
-    let equipScoreTotal = 0;
-    let shipRawSakuSqrtTotal = 0;
+    let equipScoreTotalDec = new Decimal(0);
+    let shipRawSakuSqrtTotalDec = new Decimal(0);
     let shipCount = 0;
     for (const shipObj of ships) {
         if (!shipObj || !shipObj.id)
             continue;
         shipCount++;
-        const rawSaku = getShipRawSaku(shipObj, masterData);
-        shipRawSakuSqrtTotal += Math.sqrt(rawSaku);
+        const rawSakuDec = getShipRawSaku(shipObj, masterData);
+        shipRawSakuSqrtTotalDec = shipRawSakuSqrtTotalDec.add(Decimal.sqrt(rawSakuDec));
         if (shipObj.items && typeof shipObj.items === 'object') {
             for (const key of Object.keys(shipObj.items)) {
                 const itemObj = shipObj.items[key];
@@ -171,19 +175,20 @@ export function calculateFleetSaku33(ships, hqlv = 120, masterData) {
                 const category = getItemCategory(masterItem);
                 const rawItemSaku = masterItem.saku ?? 0;
                 const rf = itemObj.rf ?? 0;
-                const bonusScout = getBonusScout(category, rf);
-                const coeff = getItemScoutCoefficient(category);
-                const score = (rawItemSaku + bonusScout) * coeff;
-                equipScoreTotal += score;
+                const bonusScoutDec = getBonusScout(category, rf);
+                const coeffDec = getItemScoutCoefficient(category);
+                const scoreDec = new Decimal(rawItemSaku).add(bonusScoutDec).mul(coeffDec);
+                equipScoreTotalDec = equipScoreTotalDec.add(scoreDec);
             }
         }
     }
     const hqMod = Math.ceil(0.4 * hqlv);
     const fleetCountMod = 2 * (6 - Math.min(shipCount, 6));
-    const baseScore = shipRawSakuSqrtTotal - hqMod + fleetCountMod;
+    const baseScoreDec = shipRawSakuSqrtTotalDec.sub(hqMod).add(fleetCountMod);
     const calcCn = (cn) => {
-        const total = cn * equipScoreTotal + baseScore;
-        return Math.round(total * 100) / 100;
+        const totalDec = equipScoreTotalDec.mul(cn).add(baseScoreDec);
+        // 作戦室 (kc-web / Jervis) 公式仕様: 小数点第3位以下切り捨て (Math.floor(score * 100) / 100)
+        return totalDec.toDecimalPlaces(2, Decimal.ROUND_DOWN).toNumber();
     };
     return {
         c1: calcCn(1),

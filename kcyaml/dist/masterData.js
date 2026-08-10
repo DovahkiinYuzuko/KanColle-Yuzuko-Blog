@@ -30,7 +30,15 @@ function readCache(filePath) {
     try {
         if (fs.existsSync(filePath)) {
             const data = fs.readFileSync(filePath, 'utf-8');
-            return JSON.parse(data);
+            const parsed = JSON.parse(data);
+            if (parsed && parsed.items && typeof parsed.items === 'object') {
+                const firstKey = Object.keys(parsed.items)[0];
+                if (firstKey && parsed.items[firstKey].typeId === undefined) {
+                    // 古いキャッシュのため無効化
+                    return null;
+                }
+            }
+            return parsed;
         }
     }
     catch { }

@@ -17,6 +17,11 @@ Below is the list of libraries, their versions, licenses, and copyright notices 
 - **License:** MIT
 - **Copyright:** Copyright (c) 2011 TJ Holowaychuk <tj@vision-media.ca>
 
+### decimal.js
+- **Version:** 10.6.0
+- **License:** MIT
+- **Copyright:** Copyright (c) 2024 Michael Mclaughlin
+
 ### node-notifier
 - **Version:** 10.0.1
 - **License:** MIT
