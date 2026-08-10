@@ -17,9 +17,13 @@ imports:
 
 ## Variables and Functions
 
+### `MODE_MAP`
+* **Type:** `Record<number, string>`
+* **Description:** Air Base action mode ID to Japanese label mapping (`0: '待機'`, `1: '出撃'`, `2: '防空'`, `3: '退避'`, `4: '休息'`).
+
 ### `parseDeckBuilder`
 * **Type:** `function`
-* **Description:** Deck Builder JSON文字列および指定されたオプション番号に応じて変換後のオブジェクト表現を生成する。
+* **Description:** Deck Builder JSON文字列および指定されたオプション番号に応じて変換後のオブジェクト表現を生成する。基地航空隊のモード判定には `airObj.mode ?? 1` を使用し `0`（待機）を正確に保持する。
 
 ### `validateDeckBuilder`
 * **Type:** `function`

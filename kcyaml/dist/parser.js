@@ -1,8 +1,9 @@
 const MODE_MAP = {
+    0: '待機',
     1: '出撃',
     2: '防空',
     3: '退避',
-    4: '待機',
+    4: '休息',
 };
 function formatItemName(id, rf, masterItems) {
     if (!id || id <= 0)
@@ -79,7 +80,7 @@ export function parseDeckBuilder(jsonText, options, masterData) {
             const airObj = rawData[airKey];
             if (!airObj || typeof airObj !== 'object')
                 continue;
-            const modeNum = airObj.mode || 1;
+            const modeNum = airObj.mode ?? 1;
             const modeStr = MODE_MAP[modeNum] || '出撃';
             const squadrons = [];
             if (airObj.items && typeof airObj.items === 'object') {

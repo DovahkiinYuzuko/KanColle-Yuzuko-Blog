@@ -1,6 +1,8 @@
 import puppeteer from 'puppeteer-core';
 import sharp from 'sharp';
 import * as esbuild from 'esbuild';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { detectSystemBrowserPath } from './browserDetector.js';
 import { loadAppConfig } from './configManager.js';
 let cachedGkcoiBundleJs = null;
@@ -11,13 +13,14 @@ async function getGkcoiBrowserBundle() {
     if (cachedGkcoiBundleJs) {
         return cachedGkcoiBundleJs;
     }
+    const currentDir = path.dirname(fileURLToPath(import.meta.url));
     const result = await esbuild.build({
         stdin: {
             contents: `
         import * as gkcoi from 'gkcoi';
         window.gkcoi = gkcoi;
       `,
-            resolveDir: process.cwd(),
+            resolveDir: currentDir,
             loader: 'ts',
         },
         bundle: true,
