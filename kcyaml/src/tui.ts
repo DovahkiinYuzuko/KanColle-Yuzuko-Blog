@@ -278,7 +278,9 @@ export async function runTui(): Promise<void> {
       imgSpinner.stop('編成画像の生成が完了しました！');
     }
 
-    p.note(markdownResult, '📝 変換結果 (Markdown)');
+    console.log('\n=== 📝 変換結果 (Markdown) ===\n');
+    console.log(markdownResult);
+    console.log('\n==============================\n');
     p.outro('🎉 処理が完了しました！クリップボードからそのまま貼り付けられます。');
   } catch (err: any) {
     s.stop('処理中にエラーが発生しました。');
