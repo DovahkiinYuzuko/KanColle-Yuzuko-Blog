@@ -34,29 +34,36 @@ function getAaRefitBonus(category: number, rf: number, item: MasterItem): Decima
 }
 
 /**
- * 熟練度 (mas) ボーナス
+ * 熟練度 (mas) による内部熟練度経験値および固定制空ボーナス
+ * 制空権シミュレータ (kc-web) 公式計算方式
  */
-function getProficiencyBonus(category: number, mas: number): number {
-  if (!mas || mas <= 0) return 0;
+function getProficiencyBonusDecimal(category: number, mas: number): { internalProf: Decimal; fixedBonus: number } {
+  if (!mas || mas <= 0) {
+    return { internalProf: new Decimal(0), fixedBonus: 0 };
+  }
 
+  const m = Math.min(mas, 7);
   const isFighter = [6, 45, 26, 48].includes(category);
   const isSeaplaneBomber = category === 11;
   const isAttackerOrBomber = [8, 7, 25].includes(category);
 
   if (isFighter) {
-    const table = [0, 1, 4, 6, 9, 14, 14, 25];
-    return table[Math.min(mas, 7)] || 0;
+    const internalProfTable = [0, 10, 25, 40, 55, 70, 85, 120];
+    const table = [0, 0, 1, 4, 7, 12, 12, 22];
+    return { internalProf: new Decimal(internalProfTable[m] || 0), fixedBonus: table[m] || 0 };
   }
   if (isSeaplaneBomber) {
-    const table = [0, 1, 1, 1, 1, 3, 3, 9];
-    return table[Math.min(mas, 7)] || 0;
+    const internalProfTable = [0, 10, 25, 40, 55, 70, 85, 120];
+    const table = [0, 0, 0, 0, 0, 1, 1, 6];
+    return { internalProf: new Decimal(internalProfTable[m] || 0), fixedBonus: table[m] || 0 };
   }
   if (isAttackerOrBomber) {
-    const table = [0, 0, 0, 0, 0, 1, 1, 3];
-    return table[Math.min(mas, 7)] || 0;
+    // 艦攻 / 艦爆 / 陸攻: MAX時の内部熟練度は 100 (sqrt(100/10) = sqrt(10) ≈ 3.162)
+    const internalProfTable = [0, 10, 25, 40, 55, 70, 85, 100];
+    return { internalProf: new Decimal(internalProfTable[m] || 0), fixedBonus: 0 };
   }
 
-  return 0;
+  return { internalProf: new Decimal(0), fixedBonus: 0 };
 }
 
 /**
@@ -92,10 +99,13 @@ export function calculateSlotFighterPower(
   // 制空権シミュレータ (kc-web) 互換仕様:
   // exactMas オプションが指定されていない場合は、デフォルトで熟練度 MAX (7) とみなして計算する
   const effectiveMas = exactMas ? (mas ?? 0) : 7;
-  const profBonus = getProficiencyBonus(category, effectiveMas);
+  const { internalProf, fixedBonus } = getProficiencyBonusDecimal(category, effectiveMas);
 
-  const fpDec = totalAaDec.mul(Decimal.sqrt(slotCapacity)).add(profBonus);
-  return fpDec.floor().toNumber();
+  const fpAaDec = totalAaDec.mul(Decimal.sqrt(slotCapacity));
+  const profSqrtDec = internalProf.gt(0) ? Decimal.sqrt(internalProf.div(10)) : new Decimal(0);
+
+  const slotFpDec = fpAaDec.add(profSqrtDec).floor().add(fixedBonus);
+  return slotFpDec.toNumber();
 }
 
 /**
