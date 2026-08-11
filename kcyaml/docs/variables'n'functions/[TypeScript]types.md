@@ -23,3 +23,4 @@ imports: []
 
 ### `CliOptions`
 * **Description:** Command line flags and options parsed by Commander.
+  * `exactMas?: boolean`: If true, uses exact `mas` (proficiency) values from JSON instead of default MAX (7) calculation.

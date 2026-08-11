@@ -16,13 +16,14 @@ imports:
 ## 関数一覧
 
 ### (Function) `calculateSlotFighterPower`
-* **説明:** 装備ID、改修値、熟練度、搭載数から1スロット分の制空値を計算します。水上偵察機(category 10)および艦上偵察機(category 9)は対空値が存在しても制空値計算対象外(0)として処理します。
+* **説明:** 装備ID、改修値、熟練度、搭載数から1スロット分の制空値を計算します。水上偵察機(category 10)および艦上偵察機(category 9)は対空値が存在しても制空値計算対象外(0)として処理します。デフォルトで熟練度はMAX(7)として計算し、`exactMas` が true の場合のみ実測値を使用します。
 * **引数:**
   * `itemId`: `number | undefined`
   * `rf`: `number | undefined`
   * `mas`: `number | undefined`
   * `slotCapacity`: `number`
   * `masterData`: `MasterData`
+  * `exactMas`: `boolean | undefined`
 * **戻り値:** `number`
 
 ### (Function) `calculateFleetFighterPower`
@@ -30,6 +31,7 @@ imports:
 * **引数:**
   * `ships`: `DeckBuilderShip[]`
   * `masterData`: `MasterData`
+  * `exactMas`: `boolean | undefined`
 * **戻り値:** `number`
 
 ### (Function) `calculateFleetSaku33`

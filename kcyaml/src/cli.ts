@@ -57,7 +57,8 @@ export async function runCli(argv: string[]): Promise<void> {
     .option('--config <path>', 'カスタム config.json ファイルのパス')
     .option('--dry-run', 'クリップボード書き込みを行わずstdout出力のみ', false)
     .option('-r, --refresh', 'マスタデータをリモートから強制再取得・更新する', false)
-    .option('--validate', '入力データの整合性・未知のIDチェックを実行する', false);
+    .option('--validate', '入力データの整合性・未知のIDチェックを実行する', false)
+    .option('--exact-mas', '入力JSONの実際の熟練度数値(mas)をそのまま使用して制空値を計算する', false);
 
   program.parse(argv);
   const opts = program.opts();
@@ -95,6 +96,7 @@ export async function runCli(argv: string[]): Promise<void> {
     validate: opts.validate,
     initConfig: opts.initConfig,
     configFile: opts.config,
+    exactMas: opts.exactMas,
   };
 
 

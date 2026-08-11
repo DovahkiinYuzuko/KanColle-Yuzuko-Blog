@@ -100,7 +100,7 @@ export function parseDeckBuilder(
       }
 
       if (ships.length > 0) {
-        const fighterPower = calculateFleetFighterPower(rawShips, masterData);
+        const fighterPower = calculateFleetFighterPower(rawShips, masterData, options.exactMas);
         const saku33 = calculateFleetSaku33(rawShips, hqlv, masterData);
 
         result.fleets.push({

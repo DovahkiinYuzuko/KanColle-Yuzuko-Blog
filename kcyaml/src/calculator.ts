@@ -67,7 +67,8 @@ export function calculateSlotFighterPower(
   rf: number | undefined,
   mas: number | undefined,
   slotCapacity: number,
-  masterData: MasterData
+  masterData: MasterData,
+  exactMas: boolean = false
 ): number {
   if (!itemId || itemId <= 0 || slotCapacity <= 0) return 0;
 
@@ -81,15 +82,17 @@ export function calculateSlotFighterPower(
   // 水上偵察機(10)および艦上偵察機(9)は対空値が存在しても制空値計算対象外(0)
   const isAirEquip = [6, 7, 8, 11, 25, 26, 45, 48].includes(category);
 
-  if (!isAirEquip || rawAa <= 0) {
-    if (![6, 45, 26, 48].includes(category)) {
-      return 0;
-    }
+  if (!isAirEquip) {
+    return 0;
   }
 
   const aaBonusDec = getAaRefitBonus(category, rf ?? 0, item);
   const totalAaDec = new Decimal(rawAa).add(aaBonusDec);
-  const profBonus = getProficiencyBonus(category, mas ?? 0);
+
+  // 制空権シミュレータ (kc-web) 互換仕様:
+  // exactMas オプションが指定されていない場合は、デフォルトで熟練度 MAX (7) とみなして計算する
+  const effectiveMas = exactMas ? (mas ?? 0) : 7;
+  const profBonus = getProficiencyBonus(category, effectiveMas);
 
   const fpDec = totalAaDec.mul(Decimal.sqrt(slotCapacity)).add(profBonus);
   return fpDec.floor().toNumber();
@@ -100,7 +103,8 @@ export function calculateSlotFighterPower(
  */
 export function calculateFleetFighterPower(
   ships: DeckBuilderShip[],
-  masterData: MasterData
+  masterData: MasterData,
+  exactMas: boolean = false
 ): number {
   let total = 0;
 
@@ -115,7 +119,7 @@ export function calculateFleetFighterPower(
         const itemObj = shipObj.items[keys[idx]];
         if (itemObj && itemObj.id) {
           const cap = maxeq[idx] ?? 0;
-          total += calculateSlotFighterPower(itemObj.id, itemObj.rf, itemObj.mas, cap, masterData);
+          total += calculateSlotFighterPower(itemObj.id, itemObj.rf, itemObj.mas, cap, masterData, exactMas);
         }
       }
     }

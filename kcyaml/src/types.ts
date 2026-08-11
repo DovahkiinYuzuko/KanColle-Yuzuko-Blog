@@ -120,6 +120,7 @@ export interface CliOptions {
   noDialog?: boolean;
   initConfig?: boolean;
   configFile?: string;
+  exactMas?: boolean;
 }
 
 
