@@ -12,6 +12,7 @@ import { buildMarkdownOutput, buildYamlOutput } from './formatter.js';
 import { generateFleetImage } from './imageGenerator.js';
 import { promptSaveFilePath } from './fileDialog.js';
 import { loadAppConfig, initConfigFile } from './configManager.js';
+import { runTui } from './tui.js';
 
 function sendOsNotification(title: string, message: string): void {
   try {
@@ -36,6 +37,11 @@ function getFormattedTimestamp(): string {
 }
 
 export async function runCli(argv: string[]): Promise<void> {
+  if (argv.length <= 2 || argv[2] === 'tui') {
+    await runTui();
+    return;
+  }
+
   const program = new Command();
 
   program

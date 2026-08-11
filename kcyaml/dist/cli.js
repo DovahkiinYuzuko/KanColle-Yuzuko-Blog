@@ -9,6 +9,7 @@ import { buildMarkdownOutput, buildYamlOutput } from './formatter.js';
 import { generateFleetImage } from './imageGenerator.js';
 import { promptSaveFilePath } from './fileDialog.js';
 import { loadAppConfig, initConfigFile } from './configManager.js';
+import { runTui } from './tui.js';
 function sendOsNotification(title, message) {
     try {
         notifier.notify({
@@ -31,6 +32,10 @@ function getFormattedTimestamp() {
     return `${yyyy}${mm}${dd}_${hh}${min}${ss}`;
 }
 export async function runCli(argv) {
+    if (argv.length <= 2 || argv[2] === 'tui') {
+        await runTui();
+        return;
+    }
     const program = new Command();
     program
         .name('kcyaml')
