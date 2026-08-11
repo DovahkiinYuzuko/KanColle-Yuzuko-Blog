@@ -21,6 +21,11 @@
 
 ### 主な機能
 
+- **対話型 TUI ウィザードモード (`kcyaml` / `kcyaml tui`)**:
+  - オプション引数なしで起動すると、ステップバイステップの TUI ウィザードが起動します。
+  - **自作 HFSM (階層型有限状態マシン)** により選択ターゲット（「基地航空隊のみ」「艦隊含む」等）を自動判定。「基地のみ」選択時は連合艦隊や画像出力の質問を全自動スキップして爆速出力します。
+  - 複数選択プロンプトに `(Space: 選択/解除 | Enter: 決定)` の操作ガイドを明示。
+  - 変換結果は枠線なしのプレーンテキストで出力され、ターミナルからマウスでそのままドラッグコピペ可能です。
 - **Deck Builder JSON のパースおよび YAML 変換**:
   - クリップボードまたは指定した JSON ファイルから艦隊（第1〜第4艦隊）および基地航空隊（第1〜第3基地）の情報を解析します。
   - 艦娘のレベル・装備・補強増設スロット・装備改修値（`☆N`）を保持したまま、視認性の高い Markdown 構造へ整形します。（※熟練度 `mas` は自動除外されます）
@@ -161,7 +166,7 @@ kcyaml --init-config
 ### 出力フォーマット例
 
 #### YAML 出力例
-```yaml
+
 - **第1艦隊:**
 ```yaml
 艦隊:
@@ -193,6 +198,11 @@ kcyaml --init-config
 
 ### Key Features
 
+- **Interactive TUI Wizard Mode (`kcyaml` / `kcyaml tui`)**:
+  - Running `kcyaml` without arguments launches an interactive step-by-step TUI wizard.
+  - Powered by a custom **HFSM (Hierarchical Finite State Machine)** that evaluates selected targets. Selecting "Land-Based Air Base only" automatically skips irrelevant questions (e.g. Combined Fleet or Image output) for maximum speed.
+  - Clear key guide `(Space: Select/Deselect | Enter: Confirm)` in multi-select prompts.
+  - Formatted results output as raw plain text without borders/frames, allowing direct mouse drag-and-drop copying from the terminal.
 - **Deck Builder JSON Parsing & YAML Conversion**:
   - Parses fleet (Fleets 1 to 4) and land-based air base (Bases 1 to 3) data from either the system clipboard or local JSON files.
   - Formats output into clean Markdown structures while preserving ship levels, equipment, expansion slots, and equipment improvement levels (`☆N`). (Note: Aircraft proficiency `mas` is automatically excluded).
@@ -321,7 +331,6 @@ You can adjust fine-grained runtime behavior in `config.json` at the project roo
 ### Output Format Example
 
 #### YAML Output Example
-```yaml
 - **第1艦隊:**
 ```yaml
 艦隊:

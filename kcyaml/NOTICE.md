@@ -7,6 +7,11 @@ Below is the list of libraries, their versions, licenses, and copyright notices 
 
 ## Core CLI & Utility
 
+### @clack/prompts
+- **Version:** 0.10.0
+- **License:** MIT
+- **Copyright:** Copyright (c) 2023 Nate Moore
+
 ### clipboardy
 - **Version:** 5.0.0
 - **License:** MIT
