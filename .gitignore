@@ -29,7 +29,6 @@
 !kcyaml/tsconfig.json
 
 !kcyaml/docs/
-!kcyaml/docs/tag-index.md
 !kcyaml/docs/variables'n'functions/
 !kcyaml/docs/variables'n'functions/**
 
