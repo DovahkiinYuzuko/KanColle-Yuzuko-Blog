@@ -45,7 +45,7 @@ export async function runTui() {
     if (fsm.context.inputSource === 'file') {
         const fileRes = await p.text({
             message: 'JSON ファイルのパスを入力してください:',
-            placeholder: '例: ./例.json',
+            placeholder: '例: ./export.json',
             validate: (val) => {
                 if (!val || val.trim() === '')
                     return 'ファイルパスを入力してください';
