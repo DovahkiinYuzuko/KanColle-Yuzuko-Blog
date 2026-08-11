@@ -68,9 +68,9 @@ export async function runTui(): Promise<void> {
 
   // 2. 艦隊番号の選択
   const fleetRes = await p.multiselect({
-    message: '変換対象の艦隊を選択してください (Space: 選択/解除 | Enter: 決定):',
+    message: '変換対象の艦隊を選択してください (Space: 選択/解除 | Enter: 決定 / 省略可):',
     options: [
-      { value: 1, label: '第1艦隊', hint: 'デフォルト' },
+      { value: 1, label: '第1艦隊' },
       { value: 2, label: '第2艦隊' },
       { value: 3, label: '第3艦隊' },
       { value: 4, label: '第4艦隊' },
@@ -101,6 +101,11 @@ export async function runTui(): Promise<void> {
     return;
   }
   const selectedAir = airRes as number[];
+
+  if (selectedFleets.length === 0 && selectedAir.length === 0) {
+    p.cancel('艦隊または基地航空隊のいずれかを1つ以上選択してください。');
+    return;
+  }
 
   // 4. 連合艦隊フォーマット
   const isRengo = await p.confirm({
@@ -190,7 +195,7 @@ export async function runTui(): Promise<void> {
   }
 
   const options: CliOptions = {
-    fleet: selectedFleets.length > 0 ? selectedFleets : [1],
+    fleet: selectedFleets.length > 0 ? selectedFleets : undefined,
     air: selectedAir.length > 0 ? selectedAir : undefined,
     input: inputFilePath || undefined,
     output: isSaveFile ? true : undefined,
