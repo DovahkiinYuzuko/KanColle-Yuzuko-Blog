@@ -6,8 +6,8 @@ import { loadMasterData } from './masterData.js';
 import { parseDeckBuilder } from './parser.js';
 import { buildMarkdownOutput, buildYamlOutput } from './formatter.js';
 import { generateFleetImage } from './imageGenerator.js';
-import { promptSaveFilePath } from './fileDialog.js';
 import { loadAppConfig } from './configManager.js';
+import { TuiFsmEngine } from './tuiFsm.js';
 import clipboardy from 'clipboardy';
 import notifier from 'node-notifier';
 
@@ -32,8 +32,9 @@ export async function runTui(): Promise<void> {
   p.intro('⚓ kcyaml 対話型 TUI ウィザード ⚓');
 
   const appConfig = loadAppConfig();
+  const fsm = new TuiFsmEngine();
 
-  // 1. 入力元ソースの選択
+  // --- STATE 1: INPUT_SOURCE ---
   const inputSource = await p.select({
     message: 'JSON データの取得元を選択してください:',
     options: [
@@ -46,9 +47,9 @@ export async function runTui(): Promise<void> {
     p.cancel('処理をキャンセルしました。');
     return;
   }
+  fsm.context.inputSource = inputSource as 'clipboard' | 'file';
 
-  let inputFilePath = '';
-  if (inputSource === 'file') {
+  if (fsm.context.inputSource === 'file') {
     const fileRes = await p.text({
       message: 'JSON ファイルのパスを入力してください:',
       placeholder: '例: ./例.json',
@@ -63,10 +64,10 @@ export async function runTui(): Promise<void> {
       p.cancel('処理をキャンセルしました。');
       return;
     }
-    inputFilePath = String(fileRes).trim();
+    fsm.context.inputFilePath = String(fileRes).trim();
   }
 
-  // 2. 艦隊番号の選択
+  // --- STATE 2: TARGET_SELECTION ---
   const fleetRes = await p.multiselect({
     message: '変換対象の艦隊を選択してください (Space: 選択/解除 | Enter: 決定 / 省略可):',
     options: [
@@ -83,9 +84,8 @@ export async function runTui(): Promise<void> {
     p.cancel('処理をキャンセルしました。');
     return;
   }
-  const selectedFleets = fleetRes as number[];
+  fsm.context.selectedFleets = fleetRes as number[];
 
-  // 3. 基地航空隊番号の選択
   const airRes = await p.multiselect({
     message: '変換対象の基地航空隊を選択してください (Space: 選択/解除 | Enter: 決定 / 省略可):',
     options: [
@@ -100,62 +100,80 @@ export async function runTui(): Promise<void> {
     p.cancel('処理をキャンセルしました。');
     return;
   }
-  const selectedAir = airRes as number[];
+  fsm.context.selectedAir = airRes as number[];
 
-  if (selectedFleets.length === 0 && selectedAir.length === 0) {
+  if (fsm.context.selectedFleets.length === 0 && fsm.context.selectedAir.length === 0) {
     p.cancel('艦隊または基地航空隊のいずれかを1つ以上選択してください。');
     return;
   }
 
-  // 4. 連合艦隊フォーマット
-  const isRengo = await p.confirm({
-    message: '連合艦隊フォーマットで出力しますか？',
-    initialValue: false,
-  });
-  if (p.isCancel(isRengo)) {
-    p.cancel('処理をキャンセルしました。');
-    return;
-  }
+  // --- STATE 3: MODE_BRANCH (HFSM 階層評価) ---
+  const modeSubState = fsm.evaluateTargetBranch();
 
-  // 5. 熟練度数値 (mas) の保持
-  const isExactMas = await p.confirm({
-    message: '実際の熟練度数値 (mas) をそのまま計算に使用しますか？',
-    initialValue: false,
-  });
-  if (p.isCancel(isExactMas)) {
-    p.cancel('処理をキャンセルしました。');
-    return;
-  }
-
-  // 6. 編成画像 (PNG) 出力
-  const isImage = await p.confirm({
-    message: '編成画像 (PNG) を同時に生成しますか？',
-    initialValue: false,
-  });
-  if (p.isCancel(isImage)) {
-    p.cancel('処理をキャンセルしました。');
-    return;
-  }
-
-  let imageTheme = appConfig.image.defaultTheme || 'official';
-  if (isImage) {
-    const themeRes = await p.select({
-      message: '編成画像のテーマを選択してください:',
-      options: [
-        { value: 'official', label: 'Official (公式風)' },
-        { value: 'dark', label: 'Dark (ダーク)' },
-        { value: 'light', label: 'Light (ライト)' },
-        { value: '74lc', label: '74lc (七四式風)' },
-      ],
+  if (modeSubState === 'AIR_ONLY') {
+    // 基地航空隊のみサブ状態: 連合艦隊・画像質問は自動スキップ！
+    const isExactMas = await p.confirm({
+      message: '実際の熟練度数値 (mas) をそのまま計算に使用しますか？',
+      initialValue: false,
     });
-    if (p.isCancel(themeRes)) {
+    if (p.isCancel(isExactMas)) {
       p.cancel('処理をキャンセルしました。');
       return;
     }
-    imageTheme = String(themeRes);
+    fsm.context.isExactMas = Boolean(isExactMas);
+  } else {
+    // 艦隊含むサブ状態 (FLEET_INCLUDED)
+    const isRengo = await p.confirm({
+      message: '連合艦隊フォーマットで出力しますか？',
+      initialValue: false,
+    });
+    if (p.isCancel(isRengo)) {
+      p.cancel('処理をキャンセルしました。');
+      return;
+    }
+    fsm.context.isRengo = Boolean(isRengo);
+
+    const isExactMas = await p.confirm({
+      message: '実際の熟練度数値 (mas) をそのまま計算に使用しますか？',
+      initialValue: false,
+    });
+    if (p.isCancel(isExactMas)) {
+      p.cancel('処理をキャンセルしました。');
+      return;
+    }
+    fsm.context.isExactMas = Boolean(isExactMas);
+
+    const isImage = await p.confirm({
+      message: '編成画像 (PNG) を同時に生成しますか？',
+      initialValue: false,
+    });
+    if (p.isCancel(isImage)) {
+      p.cancel('処理をキャンセルしました。');
+      return;
+    }
+    fsm.context.isImage = Boolean(isImage);
+
+    if (fsm.context.isImage) {
+      // サブ状態 THEME_SELECT
+      const themeRes = await p.select({
+        message: '編成画像のテーマを選択してください:',
+        options: [
+          { value: 'official', label: 'Official (公式風)' },
+          { value: 'dark', label: 'Dark (ダーク)' },
+          { value: 'light', label: 'Light (ライト)' },
+          { value: '74lc', label: '74lc (七四式風)' },
+        ],
+      });
+      if (p.isCancel(themeRes)) {
+        p.cancel('処理をキャンセルしました。');
+        return;
+      }
+      fsm.context.imageTheme = String(themeRes);
+    }
   }
 
-  // 7. 出力ファイル保存
+  // --- STATE 4: OUTPUT_SETTING ---
+  fsm.transitionTo('OUTPUT_SETTING');
   const isSaveFile = await p.confirm({
     message: 'YAML/Markdown ファイルをディスクに保存しますか？',
     initialValue: false,
@@ -164,15 +182,17 @@ export async function runTui(): Promise<void> {
     p.cancel('処理をキャンセルしました。');
     return;
   }
+  fsm.context.isSaveFile = Boolean(isSaveFile);
 
+  // --- STATE 5: EXECUTION ---
+  fsm.transitionTo('EXECUTION');
   const s = p.spinner();
   s.start('変換処理を実行中...');
 
-  // 入力JSONの読み込み
   let inputText = '';
-  if (inputFilePath) {
+  if (fsm.context.inputFilePath) {
     try {
-      inputText = fs.readFileSync(inputFilePath, 'utf-8');
+      inputText = fs.readFileSync(fsm.context.inputFilePath, 'utf-8');
     } catch (err: any) {
       s.stop('ファイルの読み込みに失敗しました。');
       p.cancel(`エラー: ${err.message}`);
@@ -194,21 +214,10 @@ export async function runTui(): Promise<void> {
     return;
   }
 
-  const options: CliOptions = {
-    fleet: selectedFleets.length > 0 ? selectedFleets : undefined,
-    air: selectedAir.length > 0 ? selectedAir : undefined,
-    input: inputFilePath || undefined,
-    output: isSaveFile ? true : undefined,
-    image: Boolean(isImage),
-    imageTheme,
-    noDialog: !appConfig.dialog.enabled,
-    dryRun: false,
-    refresh: false,
-    validate: false,
-    initConfig: false,
-    exactMas: Boolean(isExactMas),
-    rengo: Boolean(isRengo),
-  };
+  const options: CliOptions = fsm.buildCliOptions(
+    appConfig.image.defaultTheme || 'official',
+    appConfig.dialog.enabled
+  );
 
   try {
     const rawDeckObj = JSON.parse(inputText);
@@ -221,7 +230,7 @@ export async function runTui(): Promise<void> {
     sendOsNotification('kcyaml', '変換結果をクリップボードにコピーしました！');
 
     // ファイル保存処理
-    if (isSaveFile) {
+    if (fsm.context.isSaveFile) {
       const dirPath = path.join(process.cwd(), 'kcdata-output');
       if (!fs.existsSync(dirPath)) {
         fs.mkdirSync(dirPath, { recursive: true });
@@ -233,12 +242,12 @@ export async function runTui(): Promise<void> {
 
     s.stop('変換が正常に完了しました！');
 
-    // 画像出力
-    if (options.image) {
+    // 画像出力 (艦隊が含まれる場合のみ実行)
+    if (options.image && options.fleet && options.fleet.length > 0) {
       const imgSpinner = p.spinner();
       imgSpinner.start('編成画像 (PNG) を生成中...');
 
-      const targetFleets = options.fleet || [1];
+      const targetFleets = options.fleet;
       for (const fleetNum of targetFleets) {
         const fleetKey = `f${fleetNum}`;
         const fleetLabel = `第${fleetNum}艦隊`;
@@ -250,11 +259,11 @@ export async function runTui(): Promise<void> {
           hqlv: rawDeckObj.hqlv || 120,
           f1: rawDeckObj[fleetKey],
           lang: 'jp' as any,
-          theme: imageTheme as any,
+          theme: fsm.context.imageTheme as any,
         };
 
         try {
-          const imageBuffer = await generateFleetImage(singleFleetDeck, imageTheme);
+          const imageBuffer = await generateFleetImage(singleFleetDeck, fsm.context.imageTheme);
           const defaultFilename = `fleet_${fleetLabel}_${getFormattedTimestamp()}.png`;
           const dirPath = path.join(process.cwd(), 'kcdata-output');
           if (!fs.existsSync(dirPath)) {

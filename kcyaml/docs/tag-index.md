@@ -12,6 +12,7 @@
 * **Usage:**
   * [kcyaml/docs/variables'n'functions/[TypeScript]cli.md](file:///c:/Users/rikui/Documents/艦これ/kcyaml/docs/variables'n'functions/[TypeScript]cli.md)
   * [kcyaml/docs/variables'n'functions/[TypeScript]tui.md](file:///c:/Users/rikui/Documents/艦これ/kcyaml/docs/variables'n'functions/[TypeScript]tui.md)
+  * [kcyaml/docs/variables'n'functions/[TypeScript]tuiFsm.md](file:///c:/Users/rikui/Documents/艦これ/kcyaml/docs/variables'n'functions/[TypeScript]tuiFsm.md)
 
 ### `@KcYamlMasterData`
 * **Description:** Master data fetching, 1.5s timeout control, and local cache management.
