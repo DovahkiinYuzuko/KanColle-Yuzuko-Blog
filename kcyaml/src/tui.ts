@@ -68,7 +68,7 @@ export async function runTui(): Promise<void> {
 
   // 2. 艦隊番号の選択
   const fleetRes = await p.multiselect({
-    message: '変換対象の艦隊を選択してください:',
+    message: '変換対象の艦隊を選択してください (Space: 選択/解除 | Enter: 決定):',
     options: [
       { value: 1, label: '第1艦隊', hint: 'デフォルト' },
       { value: 2, label: '第2艦隊' },
@@ -87,7 +87,7 @@ export async function runTui(): Promise<void> {
 
   // 3. 基地航空隊番号の選択
   const airRes = await p.multiselect({
-    message: '変換対象の基地航空隊を選択してください (省略可):',
+    message: '変換対象の基地航空隊を選択してください (Space: 選択/解除 | Enter: 決定 / 省略可):',
     options: [
       { value: 1, label: '第1基地' },
       { value: 2, label: '第2基地' },
