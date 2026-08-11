@@ -1,6 +1,6 @@
 {
   "name": "kcyaml",
-  "version": "0.1.3",
+  "version": "0.1.2",
   "description": "KanColle Deck Builder JSON to Markdown YAML Converter",
   "main": "index.js",
   "type": "module",
