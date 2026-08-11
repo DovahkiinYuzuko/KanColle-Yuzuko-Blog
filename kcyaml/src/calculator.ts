@@ -77,7 +77,9 @@ export function calculateSlotFighterPower(
   const category = getItemCategory(item);
   const rawAa = item.taiku ?? 0;
 
-  const isAirEquip = [6, 7, 8, 9, 10, 11, 25, 26, 45, 48].includes(category);
+  // 航空戦時の制空値計算対象装備カテゴリ (6:艦戦, 7:艦爆, 8:艦攻, 11:水爆, 25:陸攻, 26:陸戦, 45:水戦, 48:局戦)
+  // 水上偵察機(10)および艦上偵察機(9)は対空値が存在しても制空値計算対象外(0)
+  const isAirEquip = [6, 7, 8, 11, 25, 26, 45, 48].includes(category);
 
   if (!isAirEquip || rawAa <= 0) {
     if (![6, 45, 26, 48].includes(category)) {
