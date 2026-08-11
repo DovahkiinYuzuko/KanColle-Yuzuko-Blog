@@ -86,9 +86,22 @@ export function parseDeckBuilder(jsonText, options, masterData) {
             }
         }
         if (options.rengo || result.fleets.length > 1) {
-            const flatRawShips = rawShipsListPerFleet.flat();
-            result.combinedFighterPower = calculateFleetFighterPower(flatRawShips, masterData, options.exactMas);
-            result.combinedSaku33 = calculateFleetSaku33(rawShipsListPerFleet, hqlv, masterData);
+            result.combinedFighterPower = result.fleets[0]?.fighterPower ?? 0;
+            let c1 = 0, c2 = 0, c3 = 0, c4 = 0;
+            for (const f of result.fleets) {
+                if (f.saku33) {
+                    c1 += f.saku33.c1;
+                    c2 += f.saku33.c2;
+                    c3 += f.saku33.c3;
+                    c4 += f.saku33.c4;
+                }
+            }
+            result.combinedSaku33 = {
+                c1: Number(c1.toFixed(2)),
+                c2: Number(c2.toFixed(2)),
+                c3: Number(c3.toFixed(2)),
+                c4: Number(c4.toFixed(2)),
+            };
         }
     }
     if (options.air && Array.isArray(options.air)) {
