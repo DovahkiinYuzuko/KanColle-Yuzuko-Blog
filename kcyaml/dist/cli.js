@@ -50,8 +50,10 @@ export async function runCli(argv) {
         .option('--init-config', 'デフォルトの config.json ファイルをプロジェクトルートに初期生成する', false)
         .option('--config <path>', 'カスタム config.json ファイルのパス')
         .option('--dry-run', 'クリップボード書き込みを行わずstdout出力のみ', false)
-        .option('-r, --refresh', 'マスタデータをリモートから強制再取得・更新する', false)
-        .option('--validate', '入力データの整合性・未知のIDチェックを実行する', false);
+        .option('-r, --rengo', '連合艦隊フォーマットで出力する', false)
+        .option('--refresh', 'マスタデータをリモートから強制再取得・更新する', false)
+        .option('--validate', '入力データの整合性・未知のIDチェックを実行する', false)
+        .option('--exact-mas', '入力JSONの実際の熟練度数値(mas)をそのまま使用して制空値を計算する', false);
     program.parse(argv);
     const opts = program.opts();
     if (opts.initConfig) {
@@ -83,6 +85,8 @@ export async function runCli(argv) {
         validate: opts.validate,
         initConfig: opts.initConfig,
         configFile: opts.config,
+        exactMas: opts.exactMas,
+        rengo: opts.rengo,
     };
     if (!options.fleet && !options.air) {
         options.fleet = [1];

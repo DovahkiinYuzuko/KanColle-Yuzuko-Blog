@@ -24,6 +24,11 @@ export function buildMarkdownOutput(parsedData, options) {
     const lines = [];
     const { finalFleetTitle, finalAirTitle } = getFinalTitles(parsedData, options);
     if (parsedData.fleets.length > 0) {
+        const isCombined = Boolean(options.rengo || (parsedData.combinedFighterPower !== undefined && parsedData.fleets.length > 1));
+        if (isCombined) {
+            lines.push('連合艦隊');
+            lines.push('');
+        }
         for (const fleet of parsedData.fleets) {
             lines.push(`- **第${fleet.number}艦隊:**`);
             lines.push('```yaml');
@@ -42,18 +47,36 @@ export function buildMarkdownOutput(parsedData, options) {
             }
             lines.push('```');
             lines.push('');
-            if (fleet.fighterPower !== undefined) {
-                lines.push(`- **制空値:** ${fleet.fighterPower}`);
+            if (!isCombined) {
+                if (fleet.fighterPower !== undefined) {
+                    lines.push(`- **制空値:** ${fleet.fighterPower}`);
+                }
+                if (fleet.saku33 !== undefined) {
+                    lines.push('- **33式分岐点係数:**');
+                    lines.push('');
+                    lines.push('|番号|係数|');
+                    lines.push('|:---:|---|');
+                    lines.push(`|1|${fleet.saku33.c1.toFixed(2)}|`);
+                    lines.push(`|2|${fleet.saku33.c2.toFixed(2)}|`);
+                    lines.push(`|3|${fleet.saku33.c3.toFixed(2)}|`);
+                    lines.push(`|4|${fleet.saku33.c4.toFixed(2)}|`);
+                }
+                lines.push('');
             }
-            if (fleet.saku33 !== undefined) {
+        }
+        if (isCombined) {
+            if (parsedData.combinedFighterPower !== undefined) {
+                lines.push(`- **制空値:** ${parsedData.combinedFighterPower}`);
+            }
+            if (parsedData.combinedSaku33 !== undefined) {
                 lines.push('- **33式分岐点係数:**');
                 lines.push('');
                 lines.push('|番号|係数|');
                 lines.push('|:---:|---|');
-                lines.push(`|1|${fleet.saku33.c1.toFixed(2)}|`);
-                lines.push(`|2|${fleet.saku33.c2.toFixed(2)}|`);
-                lines.push(`|3|${fleet.saku33.c3.toFixed(2)}|`);
-                lines.push(`|4|${fleet.saku33.c4.toFixed(2)}|`);
+                lines.push(`|1|${parsedData.combinedSaku33.c1.toFixed(2)}|`);
+                lines.push(`|2|${parsedData.combinedSaku33.c2.toFixed(2)}|`);
+                lines.push(`|3|${parsedData.combinedSaku33.c3.toFixed(2)}|`);
+                lines.push(`|4|${parsedData.combinedSaku33.c4.toFixed(2)}|`);
             }
             lines.push('');
         }

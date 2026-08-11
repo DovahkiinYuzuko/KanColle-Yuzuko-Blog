@@ -20,7 +20,7 @@ imports:
 ## Functions
 
 ### `runCli`
-* **Description:** Main CLI entrypoint. Parses Commander flags, merges with `config.json` settings, handles `--init-config`, and coordinates YAML/image output pipelines.
+* **Description:** Main CLI entrypoint. Parses Commander flags (including `-r, --rengo` for Combined Fleet formatting), merges with `config.json` settings, handles `--init-config`, and coordinates YAML/image output pipelines.
 
 ### `sendOsNotification`
 * **Description:** Sends native OS notification on successful clipboard copy or file export.

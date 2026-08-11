@@ -23,7 +23,7 @@ imports:
 
 ### `parseDeckBuilder`
 * **Type:** `function`
-* **Description:** Deck Builder JSON文字列および指定されたオプション番号に応じて変換後のオブジェクト表現を生成する。基地航空隊のモード判定には `airObj.mode ?? 1` を使用し `0`（待機）を正確に保持する。
+* **Description:** Deck Builder JSON文字列および指定されたオプション番号に応じて変換後のオブジェクト表現を生成する。複数艦隊または `--rengo` オプション指定時は、全艦隊の艦娘データを集約して `combinedFighterPower` および `combinedSaku33` を計算・保持する。基地航空隊のモード判定には `airObj.mode ?? 1` を使用し `0`（待機）を正確に保持する。
 
 ### `validateDeckBuilder`
 * **Type:** `function`

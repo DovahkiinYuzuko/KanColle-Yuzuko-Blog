@@ -30,6 +30,7 @@ export function parseDeckBuilder(jsonText, options, masterData) {
     };
     const hqlv = rawData.hqlv || 120;
     if (options.fleet && Array.isArray(options.fleet)) {
+        const rawShipsListPerFleet = [];
         for (const num of options.fleet) {
             const fleetKey = `f${num}`;
             const fleetObj = rawData[fleetKey];
@@ -73,7 +74,7 @@ export function parseDeckBuilder(jsonText, options, masterData) {
                 });
             }
             if (ships.length > 0) {
-                const fighterPower = calculateFleetFighterPower(rawShips, masterData);
+                const fighterPower = calculateFleetFighterPower(rawShips, masterData, options.exactMas);
                 const saku33 = calculateFleetSaku33(rawShips, hqlv, masterData);
                 result.fleets.push({
                     number: num,
@@ -81,7 +82,13 @@ export function parseDeckBuilder(jsonText, options, masterData) {
                     fighterPower,
                     saku33,
                 });
+                rawShipsListPerFleet.push(rawShips);
             }
+        }
+        if (options.rengo || result.fleets.length > 1) {
+            const flatRawShips = rawShipsListPerFleet.flat();
+            result.combinedFighterPower = calculateFleetFighterPower(flatRawShips, masterData, options.exactMas);
+            result.combinedSaku33 = calculateFleetSaku33(rawShipsListPerFleet, hqlv, masterData);
         }
     }
     if (options.air && Array.isArray(options.air)) {

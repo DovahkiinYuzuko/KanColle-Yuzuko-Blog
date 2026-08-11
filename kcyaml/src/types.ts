@@ -77,6 +77,13 @@ export interface ParsedAirBase {
 export interface ParsedData {
   fleets: ParsedFleet[];
   airBases: ParsedAirBase[];
+  combinedFighterPower?: number;
+  combinedSaku33?: {
+    c1: number;
+    c2: number;
+    c3: number;
+    c4: number;
+  };
 }
 
 export interface KcYamlConfig {
@@ -121,6 +128,7 @@ export interface CliOptions {
   initConfig?: boolean;
   configFile?: string;
   exactMas?: boolean;
+  rengo?: boolean;
 }
 
 

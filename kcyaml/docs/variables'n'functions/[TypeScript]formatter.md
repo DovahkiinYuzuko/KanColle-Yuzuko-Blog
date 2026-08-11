@@ -19,7 +19,7 @@ imports:
 
 ### `buildMarkdownOutput` (L26-77)
 * **Type:** `function`
-* **Description:** 艦隊・基地航空隊構造およびタイトル名を受け取り、Markdown（YAMLコードブロック含む）文字列を生成する。
+* **Description:** 艦隊・基地航空隊構造およびタイトル名を受け取り、Markdown（YAMLコードブロック含む）文字列を生成する。`options.rengo` 有効時または連合艦隊表示時は最上部に `連合艦隊` ヘッダーを出力し、各艦隊の個別制空値・33式表示を抑制した上で、全艦隊ブロックの直下に全体の合計制空値と33式分岐点係数テーブルを出力する。
 
 ### `buildYamlOutput` (L79-112)
 * **Type:** `function`

@@ -191,47 +191,56 @@ function getItemScoutCoefficient(category: number): Decimal {
 
 /**
  * 33式分岐点係数の索敵スコアを計算 (C1, C2, C3, C4)
+ * 単一艦隊 (DeckBuilderShip[]) または 複数艦隊/連合艦隊 (DeckBuilderShip[][]) に対応
  */
 export function calculateFleetSaku33(
-  ships: DeckBuilderShip[],
+  shipsInput: DeckBuilderShip[] | DeckBuilderShip[][],
   hqlv: number = 120,
   masterData: MasterData
 ): { c1: number; c2: number; c3: number; c4: number } {
   let equipScoreTotalDec = new Decimal(0);
   let shipRawSakuSqrtTotalDec = new Decimal(0);
-  let shipCount = 0;
+  let fleetCountMod = 0;
 
-  for (const shipObj of ships) {
-    if (!shipObj || !shipObj.id) continue;
-    shipCount++;
+  const fleetList: DeckBuilderShip[][] = Array.isArray(shipsInput[0])
+    ? (shipsInput as DeckBuilderShip[][])
+    : [(shipsInput as DeckBuilderShip[])];
 
-    const rawSakuDec = getShipRawSaku(shipObj, masterData);
-    shipRawSakuSqrtTotalDec = shipRawSakuSqrtTotalDec.add(Decimal.sqrt(rawSakuDec));
+  for (const fleetShips of fleetList) {
+    let validShipCountInFleet = 0;
 
-    if (shipObj.items && typeof shipObj.items === 'object') {
-      for (const key of Object.keys(shipObj.items)) {
-        const itemObj = shipObj.items[key];
-        if (!itemObj || !itemObj.id) continue;
+    for (const shipObj of fleetShips) {
+      if (!shipObj || !shipObj.id) continue;
+      validShipCountInFleet++;
 
-        const masterItem = masterData.items[itemObj.id] || masterData.items[String(itemObj.id)];
-        if (!masterItem) continue;
+      const rawSakuDec = getShipRawSaku(shipObj, masterData);
+      shipRawSakuSqrtTotalDec = shipRawSakuSqrtTotalDec.add(Decimal.sqrt(rawSakuDec));
 
-        const category = getItemCategory(masterItem);
-        const rawItemSaku = masterItem.saku ?? 0;
-        const rf = itemObj.rf ?? 0;
+      if (shipObj.items && typeof shipObj.items === 'object') {
+        for (const key of Object.keys(shipObj.items)) {
+          const itemObj = shipObj.items[key];
+          if (!itemObj || !itemObj.id) continue;
 
-        const bonusScoutDec = getBonusScout(category, rf);
-        const coeffDec = getItemScoutCoefficient(category);
+          const masterItem = masterData.items[itemObj.id] || masterData.items[String(itemObj.id)];
+          if (!masterItem) continue;
 
-        const scoreDec = new Decimal(rawItemSaku).add(bonusScoutDec).mul(coeffDec);
-        equipScoreTotalDec = equipScoreTotalDec.add(scoreDec);
+          const category = getItemCategory(masterItem);
+          const rawItemSaku = masterItem.saku ?? 0;
+          const rf = itemObj.rf ?? 0;
+
+          const bonusScoutDec = getBonusScout(category, rf);
+          const coeffDec = getItemScoutCoefficient(category);
+
+          const scoreDec = new Decimal(rawItemSaku).add(bonusScoutDec).mul(coeffDec);
+          equipScoreTotalDec = equipScoreTotalDec.add(scoreDec);
+        }
       }
     }
+
+    fleetCountMod += 2 * (6 - Math.min(validShipCountInFleet, 6));
   }
 
   const hqMod = Math.ceil(0.4 * hqlv);
-  const fleetCountMod = 2 * (6 - Math.min(shipCount, 6));
-
   const baseScoreDec = shipRawSakuSqrtTotalDec.sub(hqMod).add(fleetCountMod);
 
   const calcCn = (cn: number) => {

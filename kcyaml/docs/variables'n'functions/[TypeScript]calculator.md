@@ -35,9 +35,9 @@ imports:
 * **戻り値:** `number`
 
 ### (Function) `calculateFleetSaku33`
-* **説明:** 艦隊および司令部レベルから33式分岐点係数 (1, 2, 3, 4) の索敵スコアを算出します。
+* **説明:** 艦隊および司令部レベルから33式分岐点係数 (1, 2, 3, 4) の索敵スコアを `Decimal` 高精度演算で算出します。単一艦隊 (`DeckBuilderShip[]`) または連合艦隊などの複数艦隊 (`DeckBuilderShip[][]`) に対応します。
 * **引数:**
-  * `ships`: `DeckBuilderShip[]`
+  * `ships`: `DeckBuilderShip[] | DeckBuilderShip[][]`
   * `hqlv`: `number`
   * `masterData`: `MasterData`
 * **戻り値:** `{ c1: number; c2: number; c3: number; c4: number }`

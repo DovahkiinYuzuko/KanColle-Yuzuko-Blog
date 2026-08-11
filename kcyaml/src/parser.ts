@@ -52,6 +52,8 @@ export function parseDeckBuilder(
   const hqlv = rawData.hqlv || 120;
 
   if (options.fleet && Array.isArray(options.fleet)) {
+    const rawShipsListPerFleet: DeckBuilderShip[][] = [];
+
     for (const num of options.fleet) {
       const fleetKey = `f${num}`;
       const fleetObj = rawData[fleetKey];
@@ -109,7 +111,14 @@ export function parseDeckBuilder(
           fighterPower,
           saku33,
         });
+        rawShipsListPerFleet.push(rawShips);
       }
+    }
+
+    if (options.rengo || result.fleets.length > 1) {
+      const flatRawShips = rawShipsListPerFleet.flat();
+      result.combinedFighterPower = calculateFleetFighterPower(flatRawShips, masterData, options.exactMas);
+      result.combinedSaku33 = calculateFleetSaku33(rawShipsListPerFleet, hqlv, masterData);
     }
   }
 

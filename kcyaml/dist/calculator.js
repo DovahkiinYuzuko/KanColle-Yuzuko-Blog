@@ -29,32 +29,38 @@ function getAaRefitBonus(category, rf, item) {
     return new Decimal(0);
 }
 /**
- * 熟練度 (mas) ボーナス
+ * 熟練度 (mas) による内部熟練度経験値および固定制空ボーナス
+ * 制空権シミュレータ (kc-web) 公式計算方式
  */
-function getProficiencyBonus(category, mas) {
-    if (!mas || mas <= 0)
-        return 0;
+function getProficiencyBonusDecimal(category, mas) {
+    if (!mas || mas <= 0) {
+        return { internalProf: new Decimal(0), fixedBonus: 0 };
+    }
+    const m = Math.min(mas, 7);
     const isFighter = [6, 45, 26, 48].includes(category);
     const isSeaplaneBomber = category === 11;
     const isAttackerOrBomber = [8, 7, 25].includes(category);
     if (isFighter) {
-        const table = [0, 1, 4, 6, 9, 14, 14, 25];
-        return table[Math.min(mas, 7)] || 0;
+        const internalProfTable = [0, 10, 25, 40, 55, 70, 85, 120];
+        const table = [0, 0, 1, 4, 7, 12, 12, 22];
+        return { internalProf: new Decimal(internalProfTable[m] || 0), fixedBonus: table[m] || 0 };
     }
     if (isSeaplaneBomber) {
-        const table = [0, 1, 1, 1, 1, 3, 3, 9];
-        return table[Math.min(mas, 7)] || 0;
+        const internalProfTable = [0, 10, 25, 40, 55, 70, 85, 120];
+        const table = [0, 0, 0, 0, 0, 1, 1, 6];
+        return { internalProf: new Decimal(internalProfTable[m] || 0), fixedBonus: table[m] || 0 };
     }
     if (isAttackerOrBomber) {
-        const table = [0, 0, 0, 0, 0, 1, 1, 3];
-        return table[Math.min(mas, 7)] || 0;
+        // 艦攻 / 艦爆 / 陸攻: MAX時の内部熟練度は 100 (sqrt(100/10) = sqrt(10) ≈ 3.162)
+        const internalProfTable = [0, 10, 25, 40, 55, 70, 85, 100];
+        return { internalProf: new Decimal(internalProfTable[m] || 0), fixedBonus: 0 };
     }
-    return 0;
+    return { internalProf: new Decimal(0), fixedBonus: 0 };
 }
 /**
  * 1スロットの制空値を計算
  */
-export function calculateSlotFighterPower(itemId, rf, mas, slotCapacity, masterData) {
+export function calculateSlotFighterPower(itemId, rf, mas, slotCapacity, masterData, exactMas = false) {
     if (!itemId || itemId <= 0 || slotCapacity <= 0)
         return 0;
     const item = masterData.items[itemId] || masterData.items[String(itemId)];
@@ -62,22 +68,27 @@ export function calculateSlotFighterPower(itemId, rf, mas, slotCapacity, masterD
         return 0;
     const category = getItemCategory(item);
     const rawAa = item.taiku ?? 0;
-    const isAirEquip = [6, 7, 8, 9, 10, 11, 25, 26, 45, 48].includes(category);
-    if (!isAirEquip || rawAa <= 0) {
-        if (![6, 45, 26, 48].includes(category)) {
-            return 0;
-        }
+    // 航空戦時の制空値計算対象装備カテゴリ (6:艦戦, 7:艦爆, 8:艦攻, 11:水爆, 25:陸攻, 26:陸戦, 45:水戦, 48:局戦)
+    // 水上偵察機(10)および艦上偵察機(9)は対空値が存在しても制空値計算対象外(0)
+    const isAirEquip = [6, 7, 8, 11, 25, 26, 45, 48].includes(category);
+    if (!isAirEquip) {
+        return 0;
     }
     const aaBonusDec = getAaRefitBonus(category, rf ?? 0, item);
     const totalAaDec = new Decimal(rawAa).add(aaBonusDec);
-    const profBonus = getProficiencyBonus(category, mas ?? 0);
-    const fpDec = totalAaDec.mul(Decimal.sqrt(slotCapacity)).add(profBonus);
-    return fpDec.floor().toNumber();
+    // 制空権シミュレータ (kc-web) 互換仕様:
+    // exactMas オプションが指定されていない場合は、デフォルトで熟練度 MAX (7) とみなして計算する
+    const effectiveMas = exactMas ? (mas ?? 0) : 7;
+    const { internalProf, fixedBonus } = getProficiencyBonusDecimal(category, effectiveMas);
+    const fpAaDec = totalAaDec.mul(Decimal.sqrt(slotCapacity));
+    const profSqrtDec = internalProf.gt(0) ? Decimal.sqrt(internalProf.div(10)) : new Decimal(0);
+    const slotFpDec = fpAaDec.add(profSqrtDec).floor().add(fixedBonus);
+    return slotFpDec.toNumber();
 }
 /**
  * 艦隊の合計制空値を計算
  */
-export function calculateFleetFighterPower(ships, masterData) {
+export function calculateFleetFighterPower(ships, masterData, exactMas = false) {
     let total = 0;
     for (const shipObj of ships) {
         if (!shipObj || !shipObj.id)
@@ -90,7 +101,7 @@ export function calculateFleetFighterPower(ships, masterData) {
                 const itemObj = shipObj.items[keys[idx]];
                 if (itemObj && itemObj.id) {
                     const cap = maxeq[idx] ?? 0;
-                    total += calculateSlotFighterPower(itemObj.id, itemObj.rf, itemObj.mas, cap, masterData);
+                    total += calculateSlotFighterPower(itemObj.id, itemObj.rf, itemObj.mas, cap, masterData, exactMas);
                 }
             }
         }
@@ -153,37 +164,44 @@ function getItemScoutCoefficient(category) {
 }
 /**
  * 33式分岐点係数の索敵スコアを計算 (C1, C2, C3, C4)
+ * 単一艦隊 (DeckBuilderShip[]) または 複数艦隊/連合艦隊 (DeckBuilderShip[][]) に対応
  */
-export function calculateFleetSaku33(ships, hqlv = 120, masterData) {
+export function calculateFleetSaku33(shipsInput, hqlv = 120, masterData) {
     let equipScoreTotalDec = new Decimal(0);
     let shipRawSakuSqrtTotalDec = new Decimal(0);
-    let shipCount = 0;
-    for (const shipObj of ships) {
-        if (!shipObj || !shipObj.id)
-            continue;
-        shipCount++;
-        const rawSakuDec = getShipRawSaku(shipObj, masterData);
-        shipRawSakuSqrtTotalDec = shipRawSakuSqrtTotalDec.add(Decimal.sqrt(rawSakuDec));
-        if (shipObj.items && typeof shipObj.items === 'object') {
-            for (const key of Object.keys(shipObj.items)) {
-                const itemObj = shipObj.items[key];
-                if (!itemObj || !itemObj.id)
-                    continue;
-                const masterItem = masterData.items[itemObj.id] || masterData.items[String(itemObj.id)];
-                if (!masterItem)
-                    continue;
-                const category = getItemCategory(masterItem);
-                const rawItemSaku = masterItem.saku ?? 0;
-                const rf = itemObj.rf ?? 0;
-                const bonusScoutDec = getBonusScout(category, rf);
-                const coeffDec = getItemScoutCoefficient(category);
-                const scoreDec = new Decimal(rawItemSaku).add(bonusScoutDec).mul(coeffDec);
-                equipScoreTotalDec = equipScoreTotalDec.add(scoreDec);
+    let fleetCountMod = 0;
+    const fleetList = Array.isArray(shipsInput[0])
+        ? shipsInput
+        : [shipsInput];
+    for (const fleetShips of fleetList) {
+        let validShipCountInFleet = 0;
+        for (const shipObj of fleetShips) {
+            if (!shipObj || !shipObj.id)
+                continue;
+            validShipCountInFleet++;
+            const rawSakuDec = getShipRawSaku(shipObj, masterData);
+            shipRawSakuSqrtTotalDec = shipRawSakuSqrtTotalDec.add(Decimal.sqrt(rawSakuDec));
+            if (shipObj.items && typeof shipObj.items === 'object') {
+                for (const key of Object.keys(shipObj.items)) {
+                    const itemObj = shipObj.items[key];
+                    if (!itemObj || !itemObj.id)
+                        continue;
+                    const masterItem = masterData.items[itemObj.id] || masterData.items[String(itemObj.id)];
+                    if (!masterItem)
+                        continue;
+                    const category = getItemCategory(masterItem);
+                    const rawItemSaku = masterItem.saku ?? 0;
+                    const rf = itemObj.rf ?? 0;
+                    const bonusScoutDec = getBonusScout(category, rf);
+                    const coeffDec = getItemScoutCoefficient(category);
+                    const scoreDec = new Decimal(rawItemSaku).add(bonusScoutDec).mul(coeffDec);
+                    equipScoreTotalDec = equipScoreTotalDec.add(scoreDec);
+                }
             }
         }
+        fleetCountMod += 2 * (6 - Math.min(validShipCountInFleet, 6));
     }
     const hqMod = Math.ceil(0.4 * hqlv);
-    const fleetCountMod = 2 * (6 - Math.min(shipCount, 6));
     const baseScoreDec = shipRawSakuSqrtTotalDec.sub(hqMod).add(fleetCountMod);
     const calcCn = (cn) => {
         const totalDec = equipScoreTotalDec.mul(cn).add(baseScoreDec);
