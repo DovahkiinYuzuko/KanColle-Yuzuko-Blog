@@ -49,7 +49,7 @@
 |:---:|:---:|---|:---|:---:|:---:|
 |E1|乙|Yuzuko Underson|🟩完了|2026/07/31|2026/08/01|
 |E2|丙|Yuzuko Underson|🟩完了|2026/08/04|2026/08/08|
-|E3|丙|Yuzuko Underson|🟨進行中|2026/08/10|-|
+|E3|丁|Yuzuko Underson|🟨進行中|2026/08/10|-|
 |E4|-|Yuzuko Underson|🟥未着手|-|-|
 |E5|-|Yuzuko Underson|🟥未着手|-|-|
 
