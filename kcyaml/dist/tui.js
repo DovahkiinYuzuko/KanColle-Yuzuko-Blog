@@ -5,6 +5,7 @@ import { loadMasterData } from './masterData.js';
 import { parseDeckBuilder } from './parser.js';
 import { buildMarkdownOutput, buildYamlOutput } from './formatter.js';
 import { generateFleetImage } from './imageGenerator.js';
+import { enrichShipForGkcoi } from './calculator.js';
 import { loadAppConfig } from './configManager.js';
 import { TuiFsmEngine } from './tuiFsm.js';
 import clipboardy from 'clipboardy';
@@ -225,12 +226,19 @@ export async function runTui() {
             for (const fleetNum of targetFleets) {
                 const fleetKey = `f${fleetNum}`;
                 const fleetLabel = `第${fleetNum}艦隊`;
-                if (!rawDeckObj[fleetKey])
+                const rawFleet = rawDeckObj[fleetKey];
+                if (!rawFleet)
                     continue;
+                const enrichedFleet = {};
+                for (const sKey of ['s1', 's2', 's3', 's4', 's5', 's6', 's7']) {
+                    if (rawFleet[sKey]) {
+                        enrichedFleet[sKey] = enrichShipForGkcoi(rawFleet[sKey], masterData);
+                    }
+                }
                 const singleFleetDeck = {
                     version: rawDeckObj.version || 4,
                     hqlv: rawDeckObj.hqlv || 120,
-                    f1: rawDeckObj[fleetKey],
+                    f1: enrichedFleet,
                     lang: 'jp',
                     theme: fsm.context.imageTheme,
                 };

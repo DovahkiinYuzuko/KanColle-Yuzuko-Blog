@@ -10,6 +10,8 @@ related:
   imports:
     - "src/types.ts"
     - "src/cli.ts"
+    - "src/masterData.ts"
+    - "src/calculator.ts"
 ---
 
 # `[TypeScript]tui.md`

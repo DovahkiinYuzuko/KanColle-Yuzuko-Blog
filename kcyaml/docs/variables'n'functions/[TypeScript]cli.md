@@ -8,6 +8,7 @@ exports:
 imports:
   - "kcyaml/src/types.ts"
   - "kcyaml/src/masterData.ts"
+  - "kcyaml/src/calculator.ts"
   - "kcyaml/src/parser.ts"
   - "kcyaml/src/formatter.ts"
   - "kcyaml/src/imageGenerator.ts"

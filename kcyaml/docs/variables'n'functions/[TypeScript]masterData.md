@@ -38,4 +38,4 @@ imports:
 
 ### `buildMasterMaps`
 * **Type:** `function`
-* **Description:** 取得した `START2.json` から艦娘ID・装備IDのマッピング辞書オブジェクトを構築する。
+* **Description:** 取得した `master.json` または `START2.json` から艦娘ID・装備IDのマッピング辞書オブジェクト（火力・雷装・対空・装甲・回避・索敵・対潜・耐久・運等のステータスを含む）を構築する。

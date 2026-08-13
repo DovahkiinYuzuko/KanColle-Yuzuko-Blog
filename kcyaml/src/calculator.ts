@@ -256,3 +256,92 @@ export function calculateFleetSaku33(
     c4: calcCn(4),
   };
 }
+
+/**
+ * 艦娘のLv成長ステータスを計算 (回避, 索敵, 対潜)
+ * 先人の計算式 (制空権シミュレータ / 作戦室 Jervis / 艦これWiki 準拠)
+ * 公式: Math.floor(min + (max - min) * lv / 99)
+ */
+function calculateShipGrowthStat(minVal: number, maxVal: number, lv: number): number {
+  if (maxVal === 0 && minVal === 0) return 0;
+  if (lv === 99) return maxVal;
+  return Math.floor(minVal + ((maxVal - minVal) * lv) / 99);
+}
+
+/**
+ * gkcoi 画像生成用に艦娘オブジェクトの戦闘ステータスを完全な状態に自動補完する。
+ * 先人の計算式および丸め位置をそのまま適用。
+ */
+export function enrichShipForGkcoi(
+  shipObj: DeckBuilderShip,
+  masterData: MasterData
+): DeckBuilderShip {
+  if (!shipObj || !shipObj.id) return shipObj;
+
+  const masterShip = masterData.ships[shipObj.id] || masterData.ships[String(shipObj.id)];
+  const lv = shipObj.lv || 1;
+
+  // 1. 各装備のステータス合算
+  let equipFp = 0;
+  let equipTp = 0;
+  let equipAa = 0;
+  let equipAr = 0;
+  let equipEv = 0;
+  let equipLos = 0;
+  let equipAsw = 0;
+
+  if (shipObj.items && typeof shipObj.items === 'object') {
+    for (const key of Object.keys(shipObj.items)) {
+      const item = shipObj.items[key];
+      if (!item || !item.id) continue;
+      const mItem = masterData.items[item.id] || masterData.items[String(item.id)];
+      if (mItem) {
+        equipFp += mItem.firepower ?? (mItem as any).fire ?? 0;
+        equipTp += mItem.torpedo ?? 0;
+        equipAa += mItem.taiku ?? (mItem as any).antiAir ?? 0;
+        equipAr += mItem.armor ?? 0;
+        equipEv += mItem.evasion ?? (mItem as any).avoid ?? 0;
+        equipLos += mItem.saku ?? (mItem as any).scout ?? 0;
+        equipAsw += mItem.asw ?? 0;
+      }
+    }
+  }
+
+  // 2. 艦船の素ステータス算出 (近代化改修MAX前提)
+  const baseHp = masterShip?.hp ?? 0;
+  const baseLuck = masterShip?.luck ?? 0;
+  const maxFp = masterShip?.firepower ?? (masterShip as any)?.fire ?? 0;
+  const maxTp = masterShip?.torpedo ?? 0;
+  const maxAa = masterShip?.antiAir ?? (masterShip as any)?.taiku ?? 0;
+  const maxAr = masterShip?.armor ?? 0;
+
+  const rawEv = calculateShipGrowthStat(masterShip?.minAvoid ?? (masterShip as any)?.min_avoid ?? 0, masterShip?.maxAvoid ?? (masterShip as any)?.avoid ?? 0, lv);
+  const rawLos = calculateShipGrowthStat(masterShip?.minScout ?? (masterShip as any)?.min_scout ?? 0, masterShip?.maxScout ?? (masterShip as any)?.scout ?? 0, lv);
+  const rawAsw = calculateShipGrowthStat(masterShip?.minAsw ?? (masterShip as any)?.min_asw ?? 0, masterShip?.maxAsw ?? (masterShip as any)?.asw ?? 0, lv);
+
+  // 3. 補完値を設定 (入力JSONに明示的な有効値があるものは優先)
+  const finalHp = shipObj.hp && shipObj.hp > 0 ? shipObj.hp : baseHp;
+  const finalLuck = shipObj.luck !== undefined && shipObj.luck > 0 ? shipObj.luck : (baseLuck > 0 ? baseLuck : 0);
+
+  const finalFp = shipObj.fp !== undefined ? shipObj.fp : (maxFp + equipFp);
+  const finalTp = shipObj.tp !== undefined ? shipObj.tp : (maxTp + equipTp);
+  const finalAa = shipObj.aa !== undefined ? shipObj.aa : (maxAa + equipAa);
+  const finalAr = shipObj.ar !== undefined ? shipObj.ar : (maxAr + equipAr);
+  const finalEv = shipObj.ev !== undefined ? shipObj.ev : (rawEv + equipEv);
+  const finalLos = shipObj.los !== undefined ? shipObj.los : (rawLos + equipLos);
+  const finalAsw = shipObj.asw !== undefined && shipObj.asw > 0 ? shipObj.asw : (rawAsw + equipAsw);
+
+  return {
+    ...shipObj,
+    hp: finalHp,
+    luck: finalLuck,
+    fp: finalFp,
+    tp: finalTp,
+    aa: finalAa,
+    ar: finalAr,
+    ev: finalEv,
+    los: finalLos,
+    asw: finalAsw,
+  };
+}
+

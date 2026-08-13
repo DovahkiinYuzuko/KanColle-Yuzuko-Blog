@@ -5,6 +5,16 @@ export interface MasterShip {
   saku?: [number, number]; // [min, max]
   minScout?: number;
   maxScout?: number;
+  minAvoid?: number;
+  maxAvoid?: number;
+  minAsw?: number;
+  maxAsw?: number;
+  firepower?: number; // Modernization MAX
+  torpedo?: number;   // Modernization MAX
+  antiAir?: number;   // Modernization MAX
+  armor?: number;     // Modernization MAX
+  hp?: number;
+  luck?: number;      // Base Luck
   maxeq?: number[];
 }
 
@@ -12,6 +22,11 @@ export interface MasterItem {
   name: string;
   taiku?: number;
   saku?: number;
+  firepower?: number;
+  torpedo?: number;
+  armor?: number;
+  asw?: number;
+  evasion?: number;
   typeId?: number; // apiTypeId (type)
   itype?: number;  // iconTypeId
   type?: number[];
@@ -34,6 +49,12 @@ export interface DeckBuilderShip {
   hp?: number;
   asw?: number;
   luck?: number;
+  fp?: number;
+  tp?: number;
+  aa?: number;
+  ar?: number;
+  ev?: number;
+  los?: number;
   items?: Record<string, DeckBuilderItem>;
 }
 

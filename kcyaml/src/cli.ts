@@ -8,6 +8,7 @@ import { CliOptions } from './types.js';
 import { loadMasterData } from './masterData.js';
 import { parseDeckBuilder, validateDeckBuilder } from './parser.js';
 import { buildMarkdownOutput, buildYamlOutput } from './formatter.js';
+import { enrichShipForGkcoi } from './calculator.js';
 
 import { generateFleetImage } from './imageGenerator.js';
 import { promptSaveFilePath } from './fileDialog.js';
@@ -225,10 +226,18 @@ export async function runCli(argv: string[]): Promise<void> {
 
         console.error(`[kcyaml:LOG] ${fleetLabel} の画像生成を開始します (テーマ: ${theme})...`);
 
+        const rawFleet = rawDeckObj[fleetKey];
+        const enrichedFleet: Record<string, any> = {};
+        for (const sKey of ['s1', 's2', 's3', 's4', 's5', 's6', 's7']) {
+          if (rawFleet && rawFleet[sKey]) {
+            enrichedFleet[sKey] = enrichShipForGkcoi(rawFleet[sKey], masterData);
+          }
+        }
+
         const singleFleetDeck = {
           version: rawDeckObj.version || 4,
           hqlv: rawDeckObj.hqlv || 120,
-          f1: rawDeckObj[fleetKey],
+          f1: enrichedFleet,
           lang: 'jp' as any,
           theme: theme as any,
         };
