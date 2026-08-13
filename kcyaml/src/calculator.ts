@@ -1,5 +1,6 @@
 import { Decimal } from 'decimal.js';
-import { DeckBuilderShip, MasterData, MasterItem, FitBonusStat } from './types.js';
+import { DeckBuilderData, DeckBuilderShip, MasterData, MasterItem, FitBonusStat } from './types.js';
+import ItemBonus from './itemBonusData.js';
 
 function getItemCategory(item: MasterItem): number {
   if (item.typeId !== undefined && item.typeId > 0) {
@@ -286,13 +287,13 @@ export function calculateShipFitBonus(
     saku: 0,
   };
 
-  if (!shipObj || !shipObj.id) return bonus;
+  if (!shipObj || !shipObj.id || !masterData || !masterData.ships || !masterData.items) return bonus;
 
   const masterShip = masterData.ships[shipObj.id] || masterData.ships[String(shipObj.id)];
-  const shipId = Number(shipObj.id);
+  const shipId = Number(shipObj.id) || 0;
   const shipClass = masterShip?.shipClass ?? 0;
-  const shipName = masterShip?.name ?? '';
   const shipType = masterShip?.stype ?? 0;
+  const originalId = (masterShip as any)?.originalId ?? (masterShip as any)?.orig ?? shipId;
 
   const equipList: Array<{ id: number; rf: number; item: MasterItem }> = [];
   if (shipObj.items && typeof shipObj.items === 'object') {
@@ -306,161 +307,157 @@ export function calculateShipFitBonus(
     }
   }
 
-  const itemIds = equipList.map(e => e.id);
+  if (equipList.length === 0) return bonus;
 
-  // 電探・偵察機・魚雷・主砲のカウント判定
-  const surfaceRadars = equipList.filter(e => {
-    const cat = getItemCategory(e.item);
-    // 電探(12, 13)かつ索敵5以上
-    return [12, 13].includes(cat) && (e.item.saku ?? 0) >= 5;
-  });
-  const aaRadars = equipList.filter(e => {
-    const cat = getItemCategory(e.item);
-    // 電探(12, 13)かつ対空2以上
-    return [12, 13].includes(cat) && (e.item.taiku ?? 0) >= 2;
-  });
+  let antiAirRadarCount = 0;
+  let surfaceRadarCount = 0;
+  let accuracyRadarCount = 0;
 
-  // 1. 各装備の単体ボーナス計算
-  let heavyGunCount = 0;
   for (const eq of equipList) {
-    const id = eq.id;
-    const rf = eq.rf;
+    const it = eq.item;
+    const itype = it.itype ?? (it.type ? it.type[3] : 0);
+    const antiAir = it.taiku ?? (it as any).antiAir ?? 0;
+    const scout = it.saku ?? (it as any).scout ?? 0;
+    const accuracy = (it as any).accuracy ?? 0;
 
-    // --- 12.7cm連装砲D型改二 (ID: 267) ---
-    if (id === 267) {
-      // 夕雲型(38), 陽炎型(37), 島風(10)
-      if (shipClass === 38 || shipClass === 37 || shipId === 10 || shipClass === 10) {
-        bonus.firepower = (bonus.firepower || 0) + 2;
-        bonus.evasion = (bonus.evasion || 0) + 1;
-        // 長波改二(543/743), 沖波改二(652/752), 風雲改二(564/764), 朝霜改二(668/768), 早霜改二(725/825) は追加+1
-        if ([543, 743, 652, 752, 564, 764, 668, 768, 725, 825].includes(shipId) || shipName.includes('長波') || shipName.includes('沖波') || shipName.includes('風雲') || shipName.includes('朝霜')) {
+    if (itype === 11 && antiAir > 1) antiAirRadarCount++;
+    if (itype === 11 && scout > 4) surfaceRadarCount++;
+    if (itype === 11 && accuracy >= 8) accuracyRadarCount++;
+  }
+
+  // 1. bonusData (kc-web ItemBonus.bonusData) による動的評価
+  const bonusData = (masterData.fitBonus && masterData.fitBonus.length > 0) ? masterData.fitBonus : ItemBonus.bonusData;
+  if (Array.isArray(bonusData) && bonusData.length > 0) {
+    for (let i = 0; i < bonusData.length; i++) {
+      const { types, ids, bonuses } = bonusData[i];
+      if ((types || ids) && bonuses) {
+        let fitItems: Array<{ id: number; rf: number; item: MasterItem }> = [];
+        if (types) {
+          fitItems = equipList.filter(e => {
+            const apiTypeId = e.item.typeId ?? (e.item.type ? e.item.type[2] : 0);
+            return types.includes(apiTypeId);
+          });
+        } else if (ids) {
+          fitItems = equipList.filter(e => ids.includes(e.id));
+        }
+        if (!fitItems || fitItems.length === 0) continue;
+
+        for (let j = 0; j < bonuses.length; j++) {
+          const b = bonuses[j];
+          if (b.shipBase && !b.shipBase.includes(originalId)) continue;
+          if (b.shipClass && !b.shipClass.includes(shipClass)) continue;
+          if (b.shipCountry && !b.shipCountry.includes(shipClass)) continue;
+          if (b.shipType && !b.shipType.includes(shipType)) continue;
+          if (b.shipId && !b.shipId.includes(shipId)) continue;
+          if (b.requiresAR && !antiAirRadarCount) continue;
+          if (b.requiresSR && !surfaceRadarCount) continue;
+          if (b.requiresAccR && !accuracyRadarCount) continue;
+
+          if (b.requiresId) {
+            const requiredItems = b.requiresId;
+            const requireRemodel = b.requiresIdLevel ?? 0;
+            const targetItems = equipList.filter(e => requiredItems.includes(e.id));
+            if (b.requiresIdNum && targetItems.length < b.requiresIdNum) continue;
+            if (requireRemodel && !targetItems.some(e => e.rf >= requireRemodel)) continue;
+            if (!targetItems.length) continue;
+
+            if (b.requiresId2) {
+              const requiredItems2 = b.requiresId2;
+              const requireRemodel2 = b.requiresIdLevel2 ?? 0;
+              const targetItems2 = equipList.filter(e => requiredItems2.includes(e.id));
+              if (!targetItems2.length) continue;
+              if (requireRemodel2 && !targetItems2.some(e => e.rf >= requireRemodel2)) continue;
+            }
+          }
+
+          if (b.requiresType) {
+            const hasType = equipList.some(e => {
+              const apiTypeId = e.item.typeId ?? (e.item.type ? e.item.type[2] : 0);
+              return b.requiresType.includes(apiTypeId);
+            });
+            if (!hasType) continue;
+          }
+
+          const bStat = b.bonus;
+          const addStat = (st: any) => {
+            if (!st) return;
+            if (st.firePower) bonus.firepower = (bonus.firepower || 0) + st.firePower;
+            if (st.torpedo) bonus.torpedo = (bonus.torpedo || 0) + st.torpedo;
+            if (st.antiAir) bonus.antiAir = (bonus.antiAir || 0) + st.antiAir;
+            if (st.armor) bonus.armor = (bonus.armor || 0) + st.armor;
+            if (st.avoid) bonus.evasion = (bonus.evasion || 0) + st.avoid;
+            if (st.scout) bonus.saku = (bonus.saku || 0) + st.scout;
+            if (st.asw) bonus.asw = (bonus.asw || 0) + st.asw;
+          };
+
+          const minRemodel = b.remodel;
+          if (minRemodel) {
+            const remodelFits = fitItems.filter(e => e.rf >= minRemodel);
+            if (!remodelFits.length) continue;
+            if (b.num && remodelFits.length < b.num) continue;
+            else if (!b.num) {
+              for (let k = 0; k < remodelFits.length; k++) addStat(bStat);
+            } else {
+              addStat(bStat);
+            }
+          } else if (b.num && fitItems.length < b.num) {
+            continue;
+          } else if (!b.num) {
+            for (let k = 0; k < fitItems.length; k++) addStat(bStat);
+          } else {
+            addStat(bStat);
+          }
+        }
+      }
+    }
+  } else {
+    // 2. フォールバック評価 (kc-web bonus.json と同一ロジック)
+    const itemIds = equipList.map(e => e.id);
+    let heavyGunCount = 0;
+    for (const eq of equipList) {
+      const id = eq.id;
+      if (id === 267) {
+        if (shipClass === 38 || shipClass === 37 || shipId === 10) {
+          bonus.firepower = (bonus.firepower || 0) + 2;
+          bonus.evasion = (bonus.evasion || 0) + 1;
+          if ([543, 743, 652, 752, 564, 764, 668, 768].includes(shipId)) {
+            bonus.firepower = (bonus.firepower || 0) + 1;
+          }
+        } else if (shipType === 2) {
+          bonus.firepower = (bonus.firepower || 0) + 1;
+          bonus.evasion = (bonus.evasion || 0) + 1;
+        }
+      }
+      if (id === 90) {
+        heavyGunCount++;
+        if ([29, 25, 26, 27, 28].includes(shipClass) || [5, 6].includes(shipType)) {
+          bonus.firepower = (bonus.firepower || 0) + 1;
+          bonus.evasion = (bonus.evasion || 0) + 1;
+        }
+      }
+      if (id === 50) {
+        heavyGunCount++;
+        if ([5, 6].includes(shipType)) {
           bonus.firepower = (bonus.firepower || 0) + 1;
         }
-      } else if (shipType === 2) {
-        // その他駆逐艦
-        bonus.firepower = (bonus.firepower || 0) + 1;
-        bonus.evasion = (bonus.evasion || 0) + 1;
       }
     }
 
-    // --- 12.7cm連装砲D型改三 (ID: 366) ---
-    if (id === 366) {
-      if (shipClass === 38 || shipClass === 37 || shipId === 10) {
-        bonus.firepower = (bonus.firepower || 0) + 3;
-        bonus.evasion = (bonus.evasion || 0) + 1;
-        if ([543, 743, 652, 752, 564, 764, 668, 768].includes(shipId) || shipName.includes('長波') || shipName.includes('沖波') || shipName.includes('風雲') || shipName.includes('朝霜')) {
-          bonus.firepower = (bonus.firepower || 0) + 1;
-        }
-      } else if (shipType === 2) {
-        bonus.firepower = (bonus.firepower || 0) + 1;
-        bonus.evasion = (bonus.evasion || 0) + 1;
-      }
-    }
-
-    // --- 12.7cm連装砲C型改二 (ID: 266) ---
-    if (id === 266) {
-      if (shipClass === 37 || shipClass === 38 || shipClass === 20 || shipClass === 21) {
-        bonus.firepower = (bonus.firepower || 0) + 1;
-      }
-    }
-
-    // --- 12.7cm連装砲C型改三 (ID: 433) ---
-    if (id === 433) {
-      if (shipClass === 37 || shipClass === 38) {
-        bonus.firepower = (bonus.firepower || 0) + 2;
-        bonus.evasion = (bonus.evasion || 0) + 1;
-      }
-    }
-
-    // --- 12.7cm連装砲B型改四(戦時改修)+高射装置 (ID: 282) ---
-    if (id === 282) {
-      if (shipClass === 20 || shipId === 144 || shipId === 369) {
-        // 白露型 / 夕立改二
-        bonus.firepower = (bonus.firepower || 0) + 1;
-        bonus.antiAir = (bonus.antiAir || 0) + 1;
-        bonus.evasion = (bonus.evasion || 0) + 1;
-      }
-    }
-
-    // --- 10cm連装高角砲+高射装置 (ID: 135 / 508) ---
-    if (id === 135 || id === 508) {
-      if (shipClass === 54 || shipName.includes('秋月') || shipName.includes('照月') || shipName.includes('初月') || shipName.includes('涼月') || shipName.includes('冬月')) {
-        bonus.antiAir = (bonus.antiAir || 0) + 1;
-        bonus.evasion = (bonus.evasion || 0) + 1;
-      }
-    }
-
-    // --- 20.3cm(2号)連装砲 (ID: 90) ---
-    if (id === 90) {
-      heavyGunCount++;
-      // 妙高型(29/25), 高雄型(26), 利根型(28), 最上型(27)
-      if ([29, 25, 26, 27, 28].includes(shipClass) || [5, 6].includes(shipType)) {
-        bonus.firepower = (bonus.firepower || 0) + 1;
-        bonus.evasion = (bonus.evasion || 0) + 1;
-      }
-    }
-
-    // --- 20.3cm(3号)連装砲 (ID: 50) ---
-    if (id === 50) {
-      heavyGunCount++;
-      if ([5, 6].includes(shipType)) {
-        bonus.firepower = (bonus.firepower || 0) + 1;
-      }
-    }
-  }
-
-  // 水上偵察機・水上爆撃機のカウント
-  const seaplanes = equipList.filter(e => {
-    const cat = getItemCategory(e.item);
-    return [10, 11].includes(cat);
-  });
-
-  // 2. 相互シナジーボーナス計算
-  const hasDType = itemIds.includes(267) || itemIds.includes(366);
-  const hasCType = itemIds.includes(266) || itemIds.includes(433);
-  const hasBType4 = itemIds.includes(282);
-
-  // 重巡洋艦 20.3cm各号砲 ＋ 水上偵察機シナジー (火力+3, 雷装+2)
-  if ([5, 6].includes(shipType) && heavyGunCount > 0 && seaplanes.length > 0) {
-    bonus.firepower = (bonus.firepower || 0) + 3;
-    bonus.torpedo = (bonus.torpedo || 0) + 2;
-  }
-
-  // 重巡洋艦 ＋ 電探シナジー (火力+1)
-  if ([5, 6].includes(shipType) && heavyGunCount > 0 && (surfaceRadars.length > 0 || aaRadars.length > 0)) {
-    bonus.firepower = (bonus.firepower || 0) + 1;
-  }
-
-  // D型改二/改三 ＋ 水上電探シナジー (長波・夕雲型・陽炎型など)
-  if (hasDType && surfaceRadars.length > 0) {
-    if (shipClass === 38 || shipClass === 37 || shipId === 10 || shipType === 2) {
+    const seaplanes = equipList.filter(e => [10, 11].includes(getItemCategory(e.item)));
+    if ([5, 6].includes(shipType) && heavyGunCount > 0 && seaplanes.length > 0) {
       bonus.firepower = (bonus.firepower || 0) + 3;
-      bonus.torpedo = (bonus.torpedo || 0) + 6;
-      bonus.evasion = (bonus.evasion || 0) + 3;
-      bonus.saku = (bonus.saku || 0) + 1;
+      bonus.torpedo = (bonus.torpedo || 0) + 2;
     }
-  }
-
-  // C型改二/改三 ＋ 水上電探シナジー
-  if (hasCType && surfaceRadars.length > 0 && !hasDType) {
-    if (shipClass === 37 || shipClass === 38 || shipType === 2) {
-      bonus.firepower = (bonus.firepower || 0) + 2;
-      bonus.torpedo = (bonus.torpedo || 0) + 3;
-      bonus.evasion = (bonus.evasion || 0) + 1;
+    if ([5, 6].includes(shipType) && heavyGunCount > 0 && (surfaceRadarCount > 0 || antiAirRadarCount > 0)) {
+      bonus.firepower = (bonus.firepower || 0) + 1;
     }
-  }
-
-  // B型改四 ＋ 対空電探シナジー
-  if (hasBType4 && aaRadars.length > 0) {
-    bonus.antiAir = (bonus.antiAir || 0) + 6;
-    bonus.firepower = (bonus.firepower || 0) + 1;
-  }
-
-  // B型改四 ＋ 水上電探シナジー
-  if (hasBType4 && surfaceRadars.length > 0) {
-    bonus.firepower = (bonus.firepower || 0) + 1;
-    bonus.torpedo = (bonus.torpedo || 0) + 3;
-    bonus.evasion = (bonus.evasion || 0) + 2;
+    if ((itemIds.includes(267) || itemIds.includes(366)) && surfaceRadarCount > 0) {
+      if (shipClass === 38 || shipClass === 37 || shipId === 10 || shipType === 2) {
+        bonus.firepower = (bonus.firepower || 0) + 3;
+        bonus.torpedo = (bonus.torpedo || 0) + 6;
+        bonus.evasion = (bonus.evasion || 0) + 3;
+      }
+    }
   }
 
   return bonus;

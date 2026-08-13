@@ -35,7 +35,7 @@ function readCache(filePath) {
             const parsed = JSON.parse(data);
             if (parsed && parsed.items && typeof parsed.items === 'object') {
                 const firstKey = Object.keys(parsed.items)[0];
-                if (firstKey && (parsed.items[firstKey].typeId === undefined || parsed.items[firstKey].firepower === undefined || parsed.items[firstKey].taiku === undefined)) {
+                if (firstKey && (parsed.items[firstKey].typeId === undefined || parsed.items[firstKey].firepower === undefined || parsed.items[firstKey].taiku === undefined || parsed.items[firstKey].itype === undefined || parsed.items[firstKey].itype === 0)) {
                     // 古いキャッシュのため無効化
                     return null;
                 }
@@ -126,8 +126,8 @@ function buildMasterMaps(rawMaster) {
                     asw: i.asw ?? 0,
                     evasion: i.avoid ?? 0,
                     typeId: i.type ?? 0,
-                    itype: i.icon ?? 0,
-                    type: [0, 0, i.type ?? 0, i.icon ?? 0],
+                    itype: i.itype ?? i.icon ?? 0,
+                    type: [0, 0, i.type ?? 0, i.itype ?? i.icon ?? 0],
                 };
             }
         }
