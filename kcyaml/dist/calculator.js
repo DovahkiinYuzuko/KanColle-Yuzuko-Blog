@@ -273,6 +273,7 @@ export function calculateShipFitBonus(shipObj, masterData) {
         return [12, 13].includes(cat) && (e.item.taiku ?? 0) >= 2;
     });
     // 1. 各装備の単体ボーナス計算
+    let heavyGunCount = 0;
     for (const eq of equipList) {
         const id = eq.id;
         const rf = eq.rf;
@@ -338,23 +339,39 @@ export function calculateShipFitBonus(shipObj, masterData) {
         }
         // --- 20.3cm(2号)連装砲 (ID: 90) ---
         if (id === 90) {
-            // 妙高型(25), 高雄型(26), 利根型(28), 最上型(27)
-            if ([25, 26, 27, 28].includes(shipClass) || [5, 6].includes(shipType)) {
+            heavyGunCount++;
+            // 妙高型(29/25), 高雄型(26), 利根型(28), 最上型(27)
+            if ([29, 25, 26, 27, 28].includes(shipClass) || [5, 6].includes(shipType)) {
                 bonus.firepower = (bonus.firepower || 0) + 1;
                 bonus.evasion = (bonus.evasion || 0) + 1;
             }
         }
         // --- 20.3cm(3号)連装砲 (ID: 50) ---
         if (id === 50) {
+            heavyGunCount++;
             if ([5, 6].includes(shipType)) {
                 bonus.firepower = (bonus.firepower || 0) + 1;
             }
         }
     }
+    // 水上偵察機・水上爆撃機のカウント
+    const seaplanes = equipList.filter(e => {
+        const cat = getItemCategory(e.item);
+        return [10, 11].includes(cat);
+    });
     // 2. 相互シナジーボーナス計算
     const hasDType = itemIds.includes(267) || itemIds.includes(366);
     const hasCType = itemIds.includes(266) || itemIds.includes(433);
     const hasBType4 = itemIds.includes(282);
+    // 重巡洋艦 20.3cm各号砲 ＋ 水上偵察機シナジー (火力+3, 雷装+2)
+    if ([5, 6].includes(shipType) && heavyGunCount > 0 && seaplanes.length > 0) {
+        bonus.firepower = (bonus.firepower || 0) + 3;
+        bonus.torpedo = (bonus.torpedo || 0) + 2;
+    }
+    // 重巡洋艦 ＋ 電探シナジー (火力+1)
+    if ([5, 6].includes(shipType) && heavyGunCount > 0 && (surfaceRadars.length > 0 || aaRadars.length > 0)) {
+        bonus.firepower = (bonus.firepower || 0) + 1;
+    }
     // D型改二/改三 ＋ 水上電探シナジー (長波・夕雲型・陽炎型など)
     if (hasDType && surfaceRadars.length > 0) {
         if (shipClass === 38 || shipClass === 37 || shipId === 10 || shipType === 2) {

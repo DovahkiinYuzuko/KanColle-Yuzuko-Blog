@@ -4,57 +4,58 @@ language: "TypeScript"
 description: "Calculates Fighter Power (Air Superiority), Formula 33 Effective Search Power, and Ship Fit Bonuses for KanColle fleets."
 tags: [@KcYamlCalculator]
 exports:
-  - calculateSlotFighterPower
-  - calculateFleetFighterPower
-  - calculateFleetSaku33
-  - calculateShipFitBonus
-  - enrichShipForGkcoi
+  - `calculateSlotFighterPower`
+  - `calculateFleetFighterPower`
+  - `calculateFleetSaku33`
+  - `calculateShipFitBonus`
+  - `enrichShipForGkcoi`
 imports:
   - "kcyaml/src/types.ts"
 ---
 
-# `src/calculator.ts` 仕様書
+# Specification: `calculator.ts`
 
-## 関数一覧
+## Overview
+`calculator.ts` は艦隊の制空値（対空値・改修ボーナス・熟練度ボーナス）、33式分岐点係数索敵スコア（Decimal高精度演算）、装備フィットボーナス、および gkcoi 画像生成用のステータス補完を計算する。
 
-### (Function) `calculateSlotFighterPower`
-* **説明:** 装備ID、改修値、熟練度、搭載数から1スロット分の制空値を計算します。水上偵察機(category 10)および艦上偵察機(category 9)は対空値が存在しても制空値計算対象外(0)として処理します。デフォルトで熟練度はMAX(7)として計算し、`exactMas` が true の場合のみ実測値を使用します。
-* **引数:**
-  * `itemId`: `number | undefined`
-  * `rf`: `number | undefined`
-  * `mas`: `number | undefined`
-  * `slotCapacity`: `number`
-  * `masterData`: `MasterData`
-  * `exactMas`: `boolean | undefined`
-* **戻り値:** `number`
+## Variables and Functions
 
-### (Function) `calculateFleetFighterPower`
-* **説明:** 艦隊全体の合計制空値を算出します。
-* **引数:**
-  * `ships`: `DeckBuilderShip[]`
-  * `masterData`: `MasterData`
-  * `exactMas`: `boolean | undefined`
-* **戻り値:** `number`
+### `getItemCategory` (L4-12)
+* **Type:** `function`
+* **Description:** 装備マスタオブジェクトから装備カテゴリID (typeId / type[2] / itype) を抽出する。
 
-### (Function) `calculateFleetSaku33`
-* **説明:** 艦隊および司令部レベルから33式分岐点係数 (1, 2, 3, 4) の索敵スコアを `Decimal` 高精度演算で算出します。単一艦隊 (`DeckBuilderShip[]`) または連合艦隊などの複数艦隊 (`DeckBuilderShip[][]`) に対応します。
-* **引数:**
-  * `ships`: `DeckBuilderShip[] | DeckBuilderShip[][]`
-  * `hqlv`: `number`
-  * `masterData`: `MasterData`
-* **戻り値:** `{ c1: number; c2: number; c3: number; c4: number }`
+### `getAaRefitBonus` (L17-34)
+* **Type:** `function`
+* **Description:** 装備カテゴリ、改修値 (rf)、対空値に応じた対空改修ボーナス（☆加算値）を `Decimal` で算出する。
 
-### (Function) `calculateShipFitBonus`
-* **説明:** 艦娘および装備の組み合わせから、装備単体ボーナス・水上電探等との相互シナジーボーナス・★改修ボーナスを動的に計算して返却します。
-* **引数:**
-  * `shipObj`: `DeckBuilderShip`
-  * `masterData`: `MasterData`
-* **戻り値:** `FitBonusStat`
+### `getProficiencyBonusDecimal` (L40-67)
+* **Type:** `function`
+* **Description:** 熟練度 (mas) に応じた内部熟練度経験値および固定制空ボーナスを算出する（制空権シミュレータ kc-web 互換仕様）。
 
-### (Function) `enrichShipForGkcoi`
-* **説明:** gkcoi による画像生成向けに、DeckBuilder 形式の艦娘オブジェクトに欠落している戦闘ステータス（火力、雷装、対空、装甲、回避、索敵、運、耐久、対潜）をマスタデータ、装備、および装備フィットボーナスから計算して補完・付与します。
-* **引数:**
-  * `shipObj`: `DeckBuilderShip`
-  * `masterData`: `MasterData`
-* **戻り値:** `DeckBuilderShip`
+### `calculateSlotFighterPower` (L72-109)
+* **Type:** `function`
+* **Description:** 装備ID、改修値、熟練度、搭載数から1スロット分の制空値を計算する。水上偵察機(category 10)および艦上偵察機(category 9)は対空値が存在しても制空値計算対象外(0)として処理する。`exactMas` が true の場合のみ実測値を使用し、未指定時は熟練度MAX(7)として計算する。
 
+### `calculateFleetFighterPower` (L114-139)
+* **Type:** `function`
+* **Description:** 艦隊全体の合計制空値を算出する。
+
+### `getShipRawSaku` (L144-162)
+* **Type:** `function`
+* **Description:** 艦娘レベルとマスタデータ（初期索敵値・最大索敵値）から艦娘の素索敵値を計算する。
+
+### `calculateFleetSaku33` (L196-258)
+* **Type:** `function`
+* **Description:** 艦隊および司令部レベルから33式分岐点係数 (1, 2, 3, 4) の索敵スコアを `Decimal` 高精度演算で算出する。単一艦隊 (`DeckBuilderShip[]`) または複数艦隊 (`DeckBuilderShip[][]`) に対応する。
+
+### `calculateShipFitBonus` (L275-447)
+* **Type:** `function`
+* **Description:** 艦娘および装備の組み合わせから、装備単体ボーナス・水上電探等との相互シナジーボーナス・★改修ボーナスを動的に計算して返却する。
+
+### `calculateShipGrowthStat` (L265-269)
+* **Type:** `function`
+* **Description:** レベルとマスタデータの初期値・最大値から艦船の成長ステータス（回避・索敵・対潜）を補間計算する。
+
+### `enrichShipForGkcoi` (L453-527)
+* **Type:** `function`
+* **Description:** gkcoi による画像生成向けに、DeckBuilder 形式の艦娘オブジェクトに欠落している戦闘ステータス（火力、雷装、対空、装甲、回避、索敵、運、耐久、対潜）をマスタデータ、装備、および装備フィットボーナスから計算して補完・付与する。

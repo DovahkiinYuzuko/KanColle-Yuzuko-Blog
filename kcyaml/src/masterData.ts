@@ -39,7 +39,7 @@ function readCache<T>(filePath: string): T | null {
       const parsed = JSON.parse(data) as any;
       if (parsed && parsed.items && typeof parsed.items === 'object') {
         const firstKey = Object.keys(parsed.items)[0];
-        if (firstKey && (parsed.items[firstKey].typeId === undefined || parsed.items[firstKey].firepower === undefined)) {
+        if (firstKey && (parsed.items[firstKey].typeId === undefined || parsed.items[firstKey].firepower === undefined || parsed.items[firstKey].taiku === undefined)) {
           // 古いキャッシュのため無効化
           return null;
         }
@@ -124,7 +124,7 @@ function buildMasterMaps(rawMaster: any): MasterData {
       if (i && i.id && i.name) {
         items[String(i.id)] = {
           name: i.name,
-          taiku: i.anti_air ?? 0,
+          taiku: i.antiAir ?? i.anti_air ?? 0,
           saku: i.scout ?? 0,
           firepower: i.fire ?? 0,
           torpedo: i.torpedo ?? 0,
