@@ -38,4 +38,8 @@ imports:
 
 ### `buildMasterMaps`
 * **Type:** `function`
-* **Description:** 取得した `master.json` または `START2.json` から艦娘ID・装備IDのマッピング辞書オブジェクト（火力・雷装・対空・装甲・回避・索敵・対潜・耐久・運等のステータスを含む）を構築する。
+* **Description:** 取得した `master.json` または `START2.json` から艦娘ID・装備IDのマッピング辞書オブジェクト（火力・雷装・対空・装甲・回避・索敵・対潜・耐久・運・shipClass等のステータスを含む）を構築する。
+
+### `loadFitBonusData`
+* **Type:** `function`
+* **Description:** リモートURLから装備フィットボーナスマスタJSONをタイムアウト付きで取得し、ローカル一時キャッシュ（`fit_bonus.json`）または組み込み定義からボーナスマップを構築・返却する。

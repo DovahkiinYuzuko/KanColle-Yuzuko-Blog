@@ -2,6 +2,7 @@ export interface MasterShip {
   name: string;
   type?: number;
   stype?: number;
+  shipClass?: number; // ctype / 艦型ID (夕雲型=38等)
   saku?: [number, number]; // [min, max]
   minScout?: number;
   maxScout?: number;
@@ -32,9 +33,22 @@ export interface MasterItem {
   type?: number[];
 }
 
+export interface FitBonusStat {
+  firepower?: number;
+  torpedo?: number;
+  antiAir?: number;
+  armor?: number;
+  evasion?: number;
+  asw?: number;
+  saku?: number;
+}
+
+export type FitBonusData = Record<string, any>;
+
 export interface MasterData {
   ships: Record<string, MasterShip>;
   items: Record<string, MasterItem>;
+  fitBonus?: FitBonusData;
 }
 
 export interface DeckBuilderItem {

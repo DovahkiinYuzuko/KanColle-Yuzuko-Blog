@@ -1,5 +1,5 @@
 import { Decimal } from 'decimal.js';
-import { DeckBuilderShip, MasterData, MasterItem } from './types.js';
+import { DeckBuilderShip, MasterData, MasterItem, FitBonusStat } from './types.js';
 
 function getItemCategory(item: MasterItem): number {
   if (item.typeId !== undefined && item.typeId > 0) {
@@ -269,6 +269,184 @@ function calculateShipGrowthStat(minVal: number, maxVal: number, lv: number): nu
 }
 
 /**
+ * 艦娘と装備の組み合わせから装備フィットボーナス & シナジーボーナスを計算する。
+ * 先人 (制空権シミュレータ / 作戦室 Jervis / KC3改 / 艦これWiki 準拠)
+ */
+export function calculateShipFitBonus(
+  shipObj: DeckBuilderShip,
+  masterData: MasterData
+): FitBonusStat {
+  const bonus: FitBonusStat = {
+    firepower: 0,
+    torpedo: 0,
+    antiAir: 0,
+    armor: 0,
+    evasion: 0,
+    asw: 0,
+    saku: 0,
+  };
+
+  if (!shipObj || !shipObj.id) return bonus;
+
+  const masterShip = masterData.ships[shipObj.id] || masterData.ships[String(shipObj.id)];
+  const shipId = Number(shipObj.id);
+  const shipClass = masterShip?.shipClass ?? 0;
+  const shipName = masterShip?.name ?? '';
+  const shipType = masterShip?.stype ?? 0;
+
+  const equipList: Array<{ id: number; rf: number; item: MasterItem }> = [];
+  if (shipObj.items && typeof shipObj.items === 'object') {
+    for (const key of Object.keys(shipObj.items)) {
+      const it = shipObj.items[key];
+      if (!it || !it.id) continue;
+      const mItem = masterData.items[it.id] || masterData.items[String(it.id)];
+      if (mItem) {
+        equipList.push({ id: it.id, rf: it.rf ?? 0, item: mItem });
+      }
+    }
+  }
+
+  const itemIds = equipList.map(e => e.id);
+
+  // 電探・偵察機・魚雷・主砲のカウント判定
+  const surfaceRadars = equipList.filter(e => {
+    const cat = getItemCategory(e.item);
+    // 電探(12, 13)かつ索敵5以上
+    return [12, 13].includes(cat) && (e.item.saku ?? 0) >= 5;
+  });
+  const aaRadars = equipList.filter(e => {
+    const cat = getItemCategory(e.item);
+    // 電探(12, 13)かつ対空2以上
+    return [12, 13].includes(cat) && (e.item.taiku ?? 0) >= 2;
+  });
+
+  // 1. 各装備の単体ボーナス計算
+  for (const eq of equipList) {
+    const id = eq.id;
+    const rf = eq.rf;
+
+    // --- 12.7cm連装砲D型改二 (ID: 267) ---
+    if (id === 267) {
+      // 夕雲型(38), 陽炎型(37), 島風(10)
+      if (shipClass === 38 || shipClass === 37 || shipId === 10 || shipClass === 10) {
+        bonus.firepower = (bonus.firepower || 0) + 2;
+        bonus.evasion = (bonus.evasion || 0) + 1;
+        // 長波改二(543/743), 沖波改二(652/752), 風雲改二(564/764), 朝霜改二(668/768), 早霜改二(725/825) は追加+1
+        if ([543, 743, 652, 752, 564, 764, 668, 768, 725, 825].includes(shipId) || shipName.includes('長波') || shipName.includes('沖波') || shipName.includes('風雲') || shipName.includes('朝霜')) {
+          bonus.firepower = (bonus.firepower || 0) + 1;
+        }
+      } else if (shipType === 2) {
+        // その他駆逐艦
+        bonus.firepower = (bonus.firepower || 0) + 1;
+        bonus.evasion = (bonus.evasion || 0) + 1;
+      }
+    }
+
+    // --- 12.7cm連装砲D型改三 (ID: 366) ---
+    if (id === 366) {
+      if (shipClass === 38 || shipClass === 37 || shipId === 10) {
+        bonus.firepower = (bonus.firepower || 0) + 3;
+        bonus.evasion = (bonus.evasion || 0) + 1;
+        if ([543, 743, 652, 752, 564, 764, 668, 768].includes(shipId) || shipName.includes('長波') || shipName.includes('沖波') || shipName.includes('風雲') || shipName.includes('朝霜')) {
+          bonus.firepower = (bonus.firepower || 0) + 1;
+        }
+      } else if (shipType === 2) {
+        bonus.firepower = (bonus.firepower || 0) + 1;
+        bonus.evasion = (bonus.evasion || 0) + 1;
+      }
+    }
+
+    // --- 12.7cm連装砲C型改二 (ID: 266) ---
+    if (id === 266) {
+      if (shipClass === 37 || shipClass === 38 || shipClass === 20 || shipClass === 21) {
+        bonus.firepower = (bonus.firepower || 0) + 1;
+      }
+    }
+
+    // --- 12.7cm連装砲C型改三 (ID: 433) ---
+    if (id === 433) {
+      if (shipClass === 37 || shipClass === 38) {
+        bonus.firepower = (bonus.firepower || 0) + 2;
+        bonus.evasion = (bonus.evasion || 0) + 1;
+      }
+    }
+
+    // --- 12.7cm連装砲B型改四(戦時改修)+高射装置 (ID: 282) ---
+    if (id === 282) {
+      if (shipClass === 20 || shipId === 144 || shipId === 369) {
+        // 白露型 / 夕立改二
+        bonus.firepower = (bonus.firepower || 0) + 1;
+        bonus.antiAir = (bonus.antiAir || 0) + 1;
+        bonus.evasion = (bonus.evasion || 0) + 1;
+      }
+    }
+
+    // --- 10cm連装高角砲+高射装置 (ID: 135 / 508) ---
+    if (id === 135 || id === 508) {
+      if (shipClass === 54 || shipName.includes('秋月') || shipName.includes('照月') || shipName.includes('初月') || shipName.includes('涼月') || shipName.includes('冬月')) {
+        bonus.antiAir = (bonus.antiAir || 0) + 1;
+        bonus.evasion = (bonus.evasion || 0) + 1;
+      }
+    }
+
+    // --- 20.3cm(2号)連装砲 (ID: 90) ---
+    if (id === 90) {
+      // 妙高型(25), 高雄型(26), 利根型(28), 最上型(27)
+      if ([25, 26, 27, 28].includes(shipClass) || [5, 6].includes(shipType)) {
+        bonus.firepower = (bonus.firepower || 0) + 1;
+        bonus.evasion = (bonus.evasion || 0) + 1;
+      }
+    }
+
+    // --- 20.3cm(3号)連装砲 (ID: 50) ---
+    if (id === 50) {
+      if ([5, 6].includes(shipType)) {
+        bonus.firepower = (bonus.firepower || 0) + 1;
+      }
+    }
+  }
+
+  // 2. 相互シナジーボーナス計算
+  const hasDType = itemIds.includes(267) || itemIds.includes(366);
+  const hasCType = itemIds.includes(266) || itemIds.includes(433);
+  const hasBType4 = itemIds.includes(282);
+
+  // D型改二/改三 ＋ 水上電探シナジー (長波・夕雲型・陽炎型など)
+  if (hasDType && surfaceRadars.length > 0) {
+    if (shipClass === 38 || shipClass === 37 || shipId === 10 || shipType === 2) {
+      bonus.firepower = (bonus.firepower || 0) + 3;
+      bonus.torpedo = (bonus.torpedo || 0) + 6;
+      bonus.evasion = (bonus.evasion || 0) + 3;
+      bonus.saku = (bonus.saku || 0) + 1;
+    }
+  }
+
+  // C型改二/改三 ＋ 水上電探シナジー
+  if (hasCType && surfaceRadars.length > 0 && !hasDType) {
+    if (shipClass === 37 || shipClass === 38 || shipType === 2) {
+      bonus.firepower = (bonus.firepower || 0) + 2;
+      bonus.torpedo = (bonus.torpedo || 0) + 3;
+      bonus.evasion = (bonus.evasion || 0) + 1;
+    }
+  }
+
+  // B型改四 ＋ 対空電探シナジー
+  if (hasBType4 && aaRadars.length > 0) {
+    bonus.antiAir = (bonus.antiAir || 0) + 6;
+    bonus.firepower = (bonus.firepower || 0) + 1;
+  }
+
+  // B型改四 ＋ 水上電探シナジー
+  if (hasBType4 && surfaceRadars.length > 0) {
+    bonus.firepower = (bonus.firepower || 0) + 1;
+    bonus.torpedo = (bonus.torpedo || 0) + 3;
+    bonus.evasion = (bonus.evasion || 0) + 2;
+  }
+
+  return bonus;
+}
+
+/**
  * gkcoi 画像生成用に艦娘オブジェクトの戦闘ステータスを完全な状態に自動補完する。
  * 先人の計算式および丸め位置をそのまま適用。
  */
@@ -281,7 +459,7 @@ export function enrichShipForGkcoi(
   const masterShip = masterData.ships[shipObj.id] || masterData.ships[String(shipObj.id)];
   const lv = shipObj.lv || 1;
 
-  // 1. 各装備のステータス合算
+  // 1. 各装備の基礎ステータス合算
   let equipFp = 0;
   let equipTp = 0;
   let equipAa = 0;
@@ -307,7 +485,10 @@ export function enrichShipForGkcoi(
     }
   }
 
-  // 2. 艦船の素ステータス算出 (近代化改修MAX前提)
+  // 2. 装備フィットボーナス & シナジーボーナスを計算
+  const fitBonus = calculateShipFitBonus(shipObj, masterData);
+
+  // 3. 艦船の素ステータス算出 (近代化改修MAX前提)
   const baseHp = masterShip?.hp ?? 0;
   const baseLuck = masterShip?.luck ?? 0;
   const maxFp = masterShip?.firepower ?? (masterShip as any)?.fire ?? 0;
@@ -319,17 +500,17 @@ export function enrichShipForGkcoi(
   const rawLos = calculateShipGrowthStat(masterShip?.minScout ?? (masterShip as any)?.min_scout ?? 0, masterShip?.maxScout ?? (masterShip as any)?.scout ?? 0, lv);
   const rawAsw = calculateShipGrowthStat(masterShip?.minAsw ?? (masterShip as any)?.min_asw ?? 0, masterShip?.maxAsw ?? (masterShip as any)?.asw ?? 0, lv);
 
-  // 3. 補完値を設定 (入力JSONに明示的な有効値があるものは優先)
+  // 4. 補完値を設定 (入力JSONに明示的な有効値があるものは優先、フィットボーナスを加算)
   const finalHp = shipObj.hp && shipObj.hp > 0 ? shipObj.hp : baseHp;
   const finalLuck = shipObj.luck !== undefined && shipObj.luck > 0 ? shipObj.luck : (baseLuck > 0 ? baseLuck : 0);
 
-  const finalFp = shipObj.fp !== undefined ? shipObj.fp : (maxFp + equipFp);
-  const finalTp = shipObj.tp !== undefined ? shipObj.tp : (maxTp + equipTp);
-  const finalAa = shipObj.aa !== undefined ? shipObj.aa : (maxAa + equipAa);
-  const finalAr = shipObj.ar !== undefined ? shipObj.ar : (maxAr + equipAr);
-  const finalEv = shipObj.ev !== undefined ? shipObj.ev : (rawEv + equipEv);
-  const finalLos = shipObj.los !== undefined ? shipObj.los : (rawLos + equipLos);
-  const finalAsw = shipObj.asw !== undefined && shipObj.asw > 0 ? shipObj.asw : (rawAsw + equipAsw);
+  const finalFp = shipObj.fp !== undefined ? shipObj.fp : (maxFp + equipFp + (fitBonus.firepower || 0));
+  const finalTp = shipObj.tp !== undefined ? shipObj.tp : (maxTp + equipTp + (fitBonus.torpedo || 0));
+  const finalAa = shipObj.aa !== undefined ? shipObj.aa : (maxAa + equipAa + (fitBonus.antiAir || 0));
+  const finalAr = shipObj.ar !== undefined ? shipObj.ar : (maxAr + equipAr + (fitBonus.armor || 0));
+  const finalEv = shipObj.ev !== undefined ? shipObj.ev : (rawEv + equipEv + (fitBonus.evasion || 0));
+  const finalLos = shipObj.los !== undefined ? shipObj.los : (rawLos + equipLos + (fitBonus.saku || 0));
+  const finalAsw = shipObj.asw !== undefined && shipObj.asw > 0 ? shipObj.asw : (rawAsw + equipAsw + (fitBonus.asw || 0));
 
   return {
     ...shipObj,

@@ -20,6 +20,7 @@ imports: []
 
 ### `MasterShip`
 * **Description:** Represents master ship parameters for stats calculation and image generation.
+  * `shipClass?: number`: Ship class (ctype / 艦型ID, e.g. 夕雲型=38).
   * `firepower?: number`: Modernization MAX firepower.
   * `torpedo?: number`: Modernization MAX torpedo.
   * `antiAir?: number`: Modernization MAX anti-air.
@@ -32,6 +33,9 @@ imports: []
   * `maxAvoid?: number`: Lv99 max evasion.
   * `minAsw?: number`: Lv1 base ASW.
   * `maxAsw?: number`: Lv99 max ASW.
+
+### `FitBonusData`
+* **Description:** Represents equipment fit and synergy bonus definitions loaded from remote source or local cache.
 
 ### `MasterItem`
 * **Description:** Represents master slotitem parameters for stats calculation and image generation.
