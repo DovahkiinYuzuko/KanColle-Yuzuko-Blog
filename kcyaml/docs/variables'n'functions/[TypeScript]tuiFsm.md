@@ -37,10 +37,10 @@ TUI モードにおいて、選択されたターゲット（「基地航空隊�
 
 ## クラス ＆ インターフェース定義
 
-### `TuiContext`
+### `TuiContext` (L15-25)
 - **概要**: 状態遷移中に収集されたすべてのオプション、選択ターゲット、入力テキストを保持するデータコンテキスト。
 
-### `TuiFsmEngine`
+### `TuiFsmEngine` (L27-27)
 - **`currentState`**: 現在の状態 (`TuiState`)
 - **`context`**: データコンテキスト (`TuiContext`)
 - **`getState()`**: 現在の状態 (`TuiState`) を取得する。

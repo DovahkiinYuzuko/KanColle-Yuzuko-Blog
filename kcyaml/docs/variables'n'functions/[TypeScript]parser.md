@@ -17,18 +17,18 @@ imports:
 
 ## Variables and Functions
 
-### `MODE_MAP`
+### `MODE_MAP` (L15-21)
 * **Type:** `Record<number, string>`
 * **Description:** Air Base action mode ID to Japanese label mapping (`0: '待機'`, `1: '出撃'`, `2: '防空'`, `3: '退避'`, `4: '休息'`).
 
-### `parseDeckBuilder`
+### `parseDeckBuilder` (L35-170)
 * **Type:** `function`
 * **Description:** Deck Builder JSON文字列および指定されたオプション番号に応じて変換後のオブジェクト表現を生成する。第1艦隊と第2艦隊の両方が含まれ、かつ `--rengo` オプション指定時（または連合艦隊計算時）は、艦娘データを集約して `combinedFighterPower` および `combinedSaku33` を計算・保持する。基地航空隊のモード判定には `airObj.mode ?? 1` を使用し `0`（待機）を正確に保持する。
 
-### `validateDeckBuilder`
+### `validateDeckBuilder` (L172-225)
 * **Type:** `function`
 * **Description:** 入力JSONの構文、基本キー、未登録艦娘/装備IDの健全性をチェックし検証レポートを返却する。
 
-### `formatItemName`
+### `formatItemName` (L23-33)
 * **Type:** `function`
 * **Description:** 装備IDから名称を取得し、改修値 `rf >= 1` の場合に `☆N` を結合する。

@@ -23,12 +23,15 @@
 
 - **対話型 TUI ウィザードモード (`kcyaml` / `kcyaml tui`)**:
   - オプション引数なしで起動すると、ステップバイステップの TUI ウィザードが起動します。
-  - **自作 HFSM (階層型有限状態マシン)** により選択ターゲット（「基地航空隊のみ」「艦隊含む」等）を自動判定。「基地のみ」選択時は連合艦隊や画像出力の質問を全自動スキップして爆速出力します。
+  - **自作 HFSM (階層型有限状態マシン)** により選択ターゲット（「単艦隊」「連合艦隊候補（第1・第2艦隊）」「基地航空隊のみ」等）を自動判定。「単艦隊」選択時は連合艦隊確認を自動スキップ、「基地のみ」選択時は連合艦隊や画像出力の質問を全自動スキップして爆速出力します。
   - 複数選択プロンプトに `(Space: 選択/解除 | Enter: 決定)` の操作ガイドを明示。
   - 変換結果は枠線なしのプレーンテキストで出力され、ターミナルからマウスでそのままドラッグコピペ可能です。
 - **Deck Builder JSON のパースおよび YAML 変換**:
   - クリップボードまたは指定した JSON ファイルから艦隊（第1〜第4艦隊）および基地航空隊（第1〜第3基地）の情報を解析します。
   - 艦娘のレベル・装備・補強増設スロット・装備改修値（`☆N`）を保持したまま、視認性の高い Markdown 構造へ整形します。（※熟練度 `mas` は自動除外されます）
+- **制空値および 33式分岐点係数 (1〜4) の自動算出**:
+  - 艦娘・装備パラメータから制空値（艦載機熟練度ボーナス、水偵除外、基地航空隊対応）および33式索敵値（係数1, 2, 3, 4）を高精度に自動計算して Markdown 内に出力します。
+  - 連合艦隊フォーマット指定時は、全体の合算制空値および合算33式係数テーブルを出力します。
 - **システムブラウザ自動探知による編成画像生成 (`-g`)**:
   - 重い Chromium の事前ダウンロードを行わず、OS 内にインストールされている標準の Chromium 系ブラウザ（Google Chrome、Brave、Arc、Vivaldi、Microsoft Edge、Opera 等）を自動検出してバックグラウンド制御します。
   - 制空権シミュレーターと完全に互換性のあるデザインテーマ (`official`, `dark`, `light`, `74lc` 等) で画像を即時描画します。
@@ -165,7 +168,7 @@ kcyaml --init-config
 
 ### 出力フォーマット例
 
-#### YAML 出力例
+#### 単一艦隊 出力例
 
 - **第1艦隊:**
 ```yaml
@@ -179,6 +182,16 @@ kcyaml --init-config
       - 零式水上観測機
       - 三式弾
 ```
+
+- **制空値:** 235
+- **33式分岐点係数:**
+
+|番号|係数|
+|:---:|---|
+|1|35.63|
+|2|74.03|
+|3|112.43|
+|4|150.83|
 
 ---
 
@@ -200,12 +213,15 @@ kcyaml --init-config
 
 - **Interactive TUI Wizard Mode (`kcyaml` / `kcyaml tui`)**:
   - Running `kcyaml` without arguments launches an interactive step-by-step TUI wizard.
-  - Powered by a custom **HFSM (Hierarchical Finite State Machine)** that evaluates selected targets. Selecting "Land-Based Air Base only" automatically skips irrelevant questions (e.g. Combined Fleet or Image output) for maximum speed.
+  - Powered by a custom **HFSM (Hierarchical Finite State Machine)** that evaluates selected targets. Selecting "Single Fleet" automatically skips Combined Fleet confirmation; selecting "Land-Based Air Base only" automatically skips irrelevant questions (e.g. Combined Fleet or Image output) for maximum speed.
   - Clear key guide `(Space: Select/Deselect | Enter: Confirm)` in multi-select prompts.
   - Formatted results output as raw plain text without borders/frames, allowing direct mouse drag-and-drop copying from the terminal.
 - **Deck Builder JSON Parsing & YAML Conversion**:
   - Parses fleet (Fleets 1 to 4) and land-based air base (Bases 1 to 3) data from either the system clipboard or local JSON files.
   - Formats output into clean Markdown structures while preserving ship levels, equipment, expansion slots, and equipment improvement levels (`☆N`). (Note: Aircraft proficiency `mas` is automatically excluded).
+- **Automated Fighter Power & Formula 33 Effective Search Power Calculation**:
+  - Automatically calculates Fighter Power (with aircraft proficiency bonuses, recon plane exclusion, and air base support) and Formula 33 Effective Search Power tables (coefficients 1 to 4).
+  - Outputs combined fighter power and combined Formula 33 tables when Combined Fleet formatting is enabled.
 - **Fleet Image Generation via System Browser Detection (`-g`)**:
   - Automatically detects and controls system Chromium-based browsers (Google Chrome, Brave, Arc, Vivaldi, Microsoft Edge, Opera, etc.) installed on the OS in headless mode without downloading extra Chromium binaries.
   - Instantly renders high-quality fleet composition images using themes fully compatible with simulators (`official`, `dark`, `light`, `74lc`, etc.).
@@ -250,24 +266,33 @@ npm link
 
 ### Usage & Command Examples
 
-#### 1. Conversion from Clipboard (Standard Execution)
+#### 1. Interactive TUI Wizard Execution
+Run without arguments or with `tui` subcommand:
+
+```bash
+kcyaml
+# or
+kcyaml tui
+```
+
+#### 2. Conversion from Clipboard (Standard Execution)
 Copy Deck Builder JSON from your web simulator, then run:
 
 ```bash
 kcyaml -f 1 2
 ```
 
-#### 2. Conversion from JSON File with Image (PNG) Generation
+#### 3. Conversion from JSON File with Image (PNG) Generation
 ```bash
 kcyaml -f 1 2 -i input.json -g -o
 ```
 
-#### 3. Skip Save Dialog and Auto-Save
+#### 4. Skip Save Dialog and Auto-Save
 ```bash
 kcyaml -f 1 2 -i input.json -g --no-dialog -o
 ```
 
-#### 4. Generate Default Configuration (`config.json`)
+#### 5. Generate Default Configuration (`config.json`)
 ```bash
 kcyaml --init-config
 ```
@@ -278,6 +303,7 @@ kcyaml --init-config
 
 | Option                   | Short  | Type    | Default    | Description                                                   |
 | :----------------------- | :----- | :------ | :--------- | :------------------------------------------------------------ |
+| `tui`                    | None   | command | None       | Launch interactive TUI wizard mode                            |
 | `--fleet <numbers...>`   | `-f`   | numbers | `1`        | Fleet numbers to convert (e.g., `-f 1 2 3`)                   |
 | `--air <numbers...>`     | `-a`   | numbers | None       | Land-based air base numbers to convert (e.g., `-a 1 2`)       |
 | `--title <string>`       | `-t`   | string  | None       | Parent key title name in YAML structure                       |
@@ -292,8 +318,10 @@ kcyaml --init-config
 | `--init-config`          | None   | flag    | `false`    | Initialize default `config.json` template in project root     |
 | `--config <path>`        | None   | path    | None       | Custom `config.json` file path specification                  |
 | `--dry-run`              | None   | flag    | `false`    | Output to stdout only without writing to clipboard            |
-| `-r, --refresh`          | `-r`   | flag    | `false`    | Force refetch and update master data from remote repository   |
+| `--rengo`                | `-r`   | flag    | `false`    | Format output as Combined Fleet layout                        |
+| `--refresh`              | None   | flag    | `false`    | Force refetch and update master data from remote repository   |
 | `--validate`             | None   | flag    | `false`    | Perform data structure integrity and unknown ID validation    |
+| `--exact-mas`            | None   | flag    | `false`    | Use raw proficiency numbers (mas) directly for calculation    |
 
 ---
 
@@ -330,7 +358,7 @@ You can adjust fine-grained runtime behavior in `config.json` at the project roo
 
 ### Output Format Example
 
-#### YAML Output Example
+#### Single Fleet Output Example
 - **第1艦隊:**
 ```yaml
 艦隊:
@@ -343,6 +371,16 @@ You can adjust fine-grained runtime behavior in `config.json` at the project roo
       - 零式水上観測機
       - 三式弾
 ```
+
+- **制空値:** 235
+- **33式分岐点係数:**
+
+|番号|係数|
+|:---:|---|
+|1|35.63|
+|2|74.03|
+|3|112.43|
+|4|150.83|
 
 ---
 
