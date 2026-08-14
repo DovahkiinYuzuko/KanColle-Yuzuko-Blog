@@ -43,6 +43,9 @@ function readCache<T>(filePath: string): T | null {
           // 古いキャッシュのため無効化
           return null;
         }
+        if (parsed.items['173'] && parsed.items['173'].evasion === 0) {
+          return null;
+        }
       }
       if (parsed && parsed.ships && typeof parsed.ships === 'object') {
         const firstShipKey = Object.keys(parsed.ships)[0];
@@ -73,21 +76,21 @@ function buildMasterMaps(rawMaster: any): MasterData {
       if (s && s.id && s.name) {
         ships[String(s.id)] = {
           name: s.name,
-          stype: s.type,
-          shipClass: s.type2 ?? s.ctype ?? s.class ?? 0,
-          minScout: s.min_scout ?? 0,
-          maxScout: s.scout ?? 0,
-          minAvoid: s.min_avoid ?? 0,
-          maxAvoid: s.avoid ?? 0,
-          minAsw: s.min_asw ?? 0,
-          maxAsw: s.asw ?? 0,
-          firepower: s.fire ?? 0,
+          stype: s.type ?? s.stype,
+          shipClass: s.type2 ?? s.ctype ?? s.class ?? s.shipClass ?? 0,
+          minScout: s.minScout ?? s.min_scout ?? 0,
+          maxScout: s.maxScout ?? s.scout ?? 0,
+          minAvoid: s.minAvoid ?? s.min_avoid ?? 0,
+          maxAvoid: s.maxAvoid ?? s.avoid ?? 0,
+          minAsw: s.minAsw ?? s.min_asw ?? 0,
+          maxAsw: s.maxAsw ?? s.asw ?? 0,
+          firepower: s.firepower ?? s.fire ?? 0,
           torpedo: s.torpedo ?? 0,
-          antiAir: s.anti_air ?? 0,
+          antiAir: s.antiAir ?? s.anti_air ?? 0,
           armor: s.armor ?? 0,
           hp: s.hp ?? 0,
           luck: s.luck ?? 0,
-          maxeq: Array.isArray(s.slots) ? s.slots : [],
+          maxeq: Array.isArray(s.slots) ? s.slots : (Array.isArray(s.maxeq) ? s.maxeq : []),
         };
       }
     }
@@ -130,7 +133,7 @@ function buildMasterMaps(rawMaster: any): MasterData {
           torpedo: i.torpedo ?? 0,
           armor: i.armor ?? 0,
           asw: i.asw ?? 0,
-          evasion: i.avoid ?? 0,
+          evasion: (i.avoid2 !== undefined && i.avoid2 !== 0) ? i.avoid2 : (i.avoid ?? 0),
           typeId: i.type ?? 0,
           itype: i.itype ?? i.icon ?? 0,
           type: [0, 0, i.type ?? 0, i.itype ?? i.icon ?? 0],
