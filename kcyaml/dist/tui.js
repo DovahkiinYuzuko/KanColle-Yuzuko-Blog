@@ -39,6 +39,7 @@ export async function runTui() {
         ],
     });
     if (p.isCancel(inputSource)) {
+        fsm.handleCancel();
         p.cancel('処理をキャンセルしました。');
         return;
     }
@@ -56,12 +57,14 @@ export async function runTui() {
             },
         });
         if (p.isCancel(fileRes)) {
+            fsm.handleCancel();
             p.cancel('処理をキャンセルしました。');
             return;
         }
         fsm.context.inputFilePath = String(fileRes).trim();
     }
     // --- STATE 2: TARGET_SELECTION ---
+    fsm.transitionTo('TARGET_SELECTION');
     const fleetRes = await p.multiselect({
         message: '変換対象の艦隊を選択してください (Space: 選択/解除 | Enter: 決定 / 省略可):',
         options: [
@@ -74,6 +77,7 @@ export async function runTui() {
         required: false,
     });
     if (p.isCancel(fleetRes)) {
+        fsm.handleCancel();
         p.cancel('処理をキャンセルしました。');
         return;
     }
@@ -88,44 +92,55 @@ export async function runTui() {
         required: false,
     });
     if (p.isCancel(airRes)) {
+        fsm.handleCancel();
         p.cancel('処理をキャンセルしました。');
         return;
     }
     fsm.context.selectedAir = airRes;
     if (fsm.context.selectedFleets.length === 0 && fsm.context.selectedAir.length === 0) {
+        fsm.handleCancel();
         p.cancel('艦隊または基地航空隊のいずれかを1つ以上選択してください。');
         return;
     }
     // --- STATE 3: MODE_BRANCH (HFSM 階層評価) ---
     const modeSubState = fsm.evaluateTargetBranch();
     if (modeSubState === 'AIR_ONLY') {
-        // 基地航空隊のみサブ状態: 連合艦隊・画像質問は自動スキップ！
+        // 基地航空隊のみサブ状態: 連合艦隊・画像質問は自動スキップ
         const isExactMas = await p.confirm({
             message: '実際の熟練度数値 (mas) をそのまま計算に使用しますか？',
             initialValue: false,
         });
         if (p.isCancel(isExactMas)) {
+            fsm.handleCancel();
             p.cancel('処理をキャンセルしました。');
             return;
         }
         fsm.context.isExactMas = Boolean(isExactMas);
     }
     else {
-        // 艦隊含むサブ状態 (FLEET_INCLUDED)
-        const isRengo = await p.confirm({
-            message: '連合艦隊フォーマットで出力しますか？',
-            initialValue: false,
-        });
-        if (p.isCancel(isRengo)) {
-            p.cancel('処理をキャンセルしました。');
-            return;
+        // 艦隊を含むサブ状態 (SINGLE_FLEET / COMBINED_CANDIDATE)
+        if (modeSubState === 'COMBINED_CANDIDATE') {
+            const isRengo = await p.confirm({
+                message: '連合艦隊フォーマットで出力しますか？',
+                initialValue: false,
+            });
+            if (p.isCancel(isRengo)) {
+                fsm.handleCancel();
+                p.cancel('処理をキャンセルしました。');
+                return;
+            }
+            fsm.context.isRengo = Boolean(isRengo);
         }
-        fsm.context.isRengo = Boolean(isRengo);
+        else {
+            // 単艦隊または [1, 2] 以外の組み合わせ時は連合艦隊質問を自動スキップ
+            fsm.context.isRengo = false;
+        }
         const isExactMas = await p.confirm({
             message: '実際の熟練度数値 (mas) をそのまま計算に使用しますか？',
             initialValue: false,
         });
         if (p.isCancel(isExactMas)) {
+            fsm.handleCancel();
             p.cancel('処理をキャンセルしました。');
             return;
         }
@@ -135,12 +150,14 @@ export async function runTui() {
             initialValue: false,
         });
         if (p.isCancel(isImage)) {
+            fsm.handleCancel();
             p.cancel('処理をキャンセルしました。');
             return;
         }
         fsm.context.isImage = Boolean(isImage);
         if (fsm.context.isImage) {
             // サブ状態 THEME_SELECT
+            fsm.transitionTo('THEME_SELECT');
             const themeRes = await p.select({
                 message: '編成画像のテーマを選択してください:',
                 options: [
@@ -151,6 +168,7 @@ export async function runTui() {
                 ],
             });
             if (p.isCancel(themeRes)) {
+                fsm.handleCancel();
                 p.cancel('処理をキャンセルしました。');
                 return;
             }
@@ -164,6 +182,7 @@ export async function runTui() {
         initialValue: false,
     });
     if (p.isCancel(isSaveFile)) {
+        fsm.handleCancel();
         p.cancel('処理をキャンセルしました。');
         return;
     }

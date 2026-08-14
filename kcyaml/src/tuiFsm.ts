@@ -5,7 +5,8 @@ export type TuiState =
   | 'TARGET_SELECTION'
   | 'MODE_BRANCH'
   | 'AIR_ONLY'
-  | 'FLEET_INCLUDED'
+  | 'SINGLE_FLEET'
+  | 'COMBINED_CANDIDATE'
   | 'THEME_SELECT'
   | 'OUTPUT_SETTING'
   | 'EXECUTION'
@@ -45,20 +46,44 @@ export class TuiFsmEngine {
   }
 
   /**
-   * ターゲット選択状態から、モード分岐状態（AIR_ONLY vs FLEET_INCLUDED）を自動評価して遷移する
+   * 第1艦隊と第2艦隊の両方が選択されているか判定するガード条件
    */
-  public evaluateTargetBranch(): TuiState {
+  public isCombinedCandidate(): boolean {
+    return (
+      this.context.selectedFleets.includes(1) &&
+      this.context.selectedFleets.includes(2)
+    );
+  }
+
+  /**
+   * ターゲット選択状態から、モード分岐階層サブ状態（AIR_ONLY, SINGLE_FLEET, COMBINED_CANDIDATE）を評価して遷移する
+   */
+  public evaluateTargetBranch(): 'AIR_ONLY' | 'SINGLE_FLEET' | 'COMBINED_CANDIDATE' {
     if (this.context.selectedFleets.length === 0 && this.context.selectedAir.length > 0) {
-      // 基地航空隊のみの場合
+      // 基地航空隊のみの場合: 連合艦隊・画像質問はスキップ
       this.context.isRengo = false;
       this.context.isImage = false;
       this.transitionTo('AIR_ONLY');
       return 'AIR_ONLY';
-    } else {
-      // 艦隊を含む場合
-      this.transitionTo('FLEET_INCLUDED');
-      return 'FLEET_INCLUDED';
     }
+
+    if (this.isCombinedCandidate()) {
+      // 第1艦隊と第2艦隊を含む場合: 連合艦隊・熟練度・画像質問を評価
+      this.transitionTo('COMBINED_CANDIDATE');
+      return 'COMBINED_CANDIDATE';
+    }
+
+    // 単艦隊または [1, 2] を同時に含まない艦隊選択の場合: 連合艦隊質問はスキップ
+    this.context.isRengo = false;
+    this.transitionTo('SINGLE_FLEET');
+    return 'SINGLE_FLEET';
+  }
+
+  /**
+   * 中断・キャンセル時の安全な状態遷移
+   */
+  public handleCancel(): void {
+    this.transitionTo('CANCELLED');
   }
 
   /**

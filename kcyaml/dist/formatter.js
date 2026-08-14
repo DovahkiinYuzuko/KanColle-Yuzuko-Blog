@@ -24,12 +24,15 @@ export function buildMarkdownOutput(parsedData, options) {
     const lines = [];
     const { finalFleetTitle, finalAirTitle } = getFinalTitles(parsedData, options);
     if (parsedData.fleets.length > 0) {
-        const isCombined = Boolean(options.rengo || (parsedData.combinedFighterPower !== undefined && parsedData.fleets.length > 1));
+        const hasFleet1 = parsedData.fleets.some((f) => f.number === 1);
+        const hasFleet2 = parsedData.fleets.some((f) => f.number === 2);
+        const isCombined = Boolean(options.rengo && hasFleet1 && hasFleet2);
         if (isCombined) {
             lines.push('連合艦隊');
             lines.push('');
         }
         for (const fleet of parsedData.fleets) {
+            lines.push(`![編成画像]()\n`);
             lines.push(`- **第${fleet.number}艦隊:**`);
             lines.push('```yaml');
             lines.push(`${finalFleetTitle}:`);

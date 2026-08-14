@@ -85,7 +85,9 @@ export function parseDeckBuilder(jsonText, options, masterData) {
                 rawShipsListPerFleet.push(rawShips);
             }
         }
-        if (options.rengo || result.fleets.length > 1) {
+        const hasFleet1 = result.fleets.some((f) => f.number === 1);
+        const hasFleet2 = result.fleets.some((f) => f.number === 2);
+        if (options.rengo && hasFleet1 && hasFleet2) {
             result.combinedFighterPower = result.fleets[0]?.fighterPower ?? 0;
             let c1 = 0, c2 = 0, c3 = 0, c4 = 0;
             for (const f of result.fleets) {
