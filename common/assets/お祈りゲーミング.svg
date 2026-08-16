@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="170" height="40">
+  <style>
+    .gaming-text {
+      font-size: 20px;
+      font-weight: bold;
+      fill: url(#rainbow);
+    }
+  </style>
+  <defs>
+    <linearGradient id="rainbow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ff0000">
+        <animate attributeName="stop-color" values="#ff0000;#00ff00;#0000ff;#ff0000" dur="2s" repeatCount="indefinite" />
+      </stop>
+      <stop offset="100%" stop-color="#0000ff">
+        <animate attributeName="stop-color" values="#0000ff;#ff0000;#00ff00;#0000ff" dur="2s" repeatCount="indefinite" />
+      </stop>
+    </linearGradient>
+  </defs>
+  <text x="5" y="27" class="gaming-text">お祈りゲーミング</text>
+</svg>
+
