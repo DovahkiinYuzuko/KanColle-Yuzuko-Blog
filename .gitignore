@@ -18,6 +18,29 @@
 !2026_summer/E3/**
 !2026_summer/E4/
 !2026_summer/E4/**
+!2026_summer/E5/
+!2026_summer/E5/**
+# .gitignores/common.gitignore
+!common/
+!common/assets/
+!common/assets/**
+# .gitignores/kctemp.gitignore
+!kctemp/
+
+!kctemp/README.md
+!kctemp/NOTICE.md
+!kctemp/LICENSE.*
+
+!kcyaml/index.js
+!kctemp/package.json
+!kctemp/package-lock.json
+
+!kctemp/docs/
+!kctemp/docs/variables'n'functions/
+!kctemp/docs/variables'n'functions/**
+
+!kctemp/src/
+!kctemp/src/**
 # .gitignores/kcyaml.gitignore
 !kcyaml/
 
