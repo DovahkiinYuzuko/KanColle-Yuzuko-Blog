@@ -8,6 +8,7 @@
 !.github/workflows/**
 # .gitignores/2026_summer.gitignore
 !README.md
+!26_summerクリア.png
 
 !2026_summer/
 !2026_summer/E1/
