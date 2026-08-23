@@ -28,7 +28,7 @@ graph TD
 ## Exported Classes
 
 ### (Class) `StateMachine`
-* **Description:** Manages current state, context data, history, and transition execution.
+* **Description:** Manages current state, context data, termination status, and transition execution.
 
 #### (Method) `transitionTo`
 * **Description:** Switches the machine to a new state and executes its handler.
@@ -37,6 +37,12 @@ graph TD
 * **Returns:** `Promise<void>`
 
 #### (Method) `run`
-* **Description:** Starts state machine execution from the initial state until reaching a terminal state.
-* **Arguments:** None
+* **Description:** Starts state machine execution from the specified initial state until reaching a terminal state.
+* **Arguments:**
+  * `initialState` (`string`): Identifier of the state to start execution from.
 * **Returns:** `Promise<void>`
+
+#### (Method) `terminate`
+* **Description:** Flags the state machine as terminated to stop any further state transitions.
+* **Arguments:** None
+* **Returns:** `void`

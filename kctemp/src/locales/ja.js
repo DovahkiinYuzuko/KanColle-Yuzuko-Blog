@@ -13,7 +13,8 @@ export const messages = {
   section: {
     selectPrompt: '生成するセクションを選択してください (スペースキーで選択/解除):',
     selectInstruction: '↑/↓で移動、スペースで選択、Aで全選択、Enterで確定',
-    noSectionSelected: '少なくとも1つのセクションを選択してください。'
+    noSectionSelected: '少なくとも1つのセクションを選択してください。',
+    noSubSectionsInfo: '選択可能なサブ見出しが見つかりませんでした。テンプレート全体を出力対象とします。'
   },
   repeat: {
     askRepeat: (title) => `セクション「${title}」の生成セット数（リピート回数）を入力してください:`,
@@ -45,6 +46,7 @@ export const messages = {
       cancel: '処理を中断する'
     },
     success: (filePath) => `Markdownファイルを正常に生成・保存しました:\n  -> ${filePath}`,
-    saveError: 'ファイルの書き込み中にエラーが発生しました: '
+    saveError: 'ファイルの書き込み中にエラーが発生しました: ',
+    configWarning: (msg) => `警告: 設定ファイルの保存に失敗しました (${msg})。ファイル出力は正常に完了しています。`
   }
 };

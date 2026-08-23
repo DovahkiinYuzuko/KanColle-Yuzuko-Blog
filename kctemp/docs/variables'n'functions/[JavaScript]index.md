@@ -30,7 +30,7 @@ graph TD
 
 ## Exported Functions
 
-### (Function) `main` (L20-46)
+### (Function) `main`
 * **Description:** Initializes StateMachine with initial state `SELECT_TEMPLATE` and executes the run loop.
 * **Arguments:** None
 * **Returns:** `Promise<void>`

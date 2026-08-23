@@ -14,7 +14,7 @@ related:
 # [JavaScript]uiPrompts
 
 ## Overview
-Wraps `@inquirer/prompts` methods (select, checkbox, input, confirm) using centralized messages from locale definitions.
+Wraps `@inquirer/prompts` methods (select, checkbox, input) using centralized messages from locale definitions.
 
 ## Dependencies & Impact Scope
 ### Dependency Diagram
@@ -36,13 +36,13 @@ graph TD
 * **Returns:** `Promise<string>`
 
 ### (Function) `promptSectionSelection`
-* **Description:** Displays checkbox list of AST headings/sections.
+* **Description:** Displays checkbox list of AST headings/sections with fallback for templates with no sub-headings.
 * **Arguments:**
   * `sections` (`Array<{id: string, title: string, depth: number}>`): Section metadata.
 * **Returns:** `Promise<string[]>`
 
 ### (Function) `promptRepeatCount`
-* **Description:** Prompts user for repeat count of a specific section.
+* **Description:** Prompts user for repeat count of a specific section with strict positive integer validation.
 * **Arguments:**
   * `sectionTitle` (`string`): Title of the section to repeat.
   * `defaultValue` (`number`): Initial default count.
@@ -67,5 +67,5 @@ graph TD
 * **Description:** Asks user how to handle existing file conflict.
 * **Arguments:**
   * `conflictPath` (`string`): Conflicting file path.
-  * `autoName` (`string`): Candidate sequential filename.
+  * `autoCandidateName` (`string`): Candidate sequential filename.
 * **Returns:** `Promise<'auto' | 'manual' | 'cancel'>`

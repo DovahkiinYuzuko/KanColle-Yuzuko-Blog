@@ -2,7 +2,7 @@
 source_file: "kctemp/src/services/astService.js"
 language: "JavaScript"
 type: "Service"
-description: "Parses Markdown into AST, filters/repeats sections, replaces variables, and serializes back to Markdown."
+description: "Parses Markdown into AST, filters/repeats sections, replaces variables safely, and serializes back to Markdown."
 tags: ["@AST"]
 related:
   exports:
@@ -13,7 +13,7 @@ related:
 # [JavaScript]astService
 
 ## Overview
-Provides AST manipulation functionality via `unified`, `remark-parse`, and `remark-stringify` to parse markdown, extract hierarchical sections, duplicate repeated blocks, substitute variables, and serialize clean markdown output.
+Provides AST manipulation functionality via `unified`, `remark-parse`, and `remark-stringify` to parse markdown, extract hierarchical sections, duplicate repeated blocks, substitute variables without regex special pattern pitfalls, and serialize clean markdown output.
 
 ## Dependencies & Impact Scope
 ### Dependency Diagram
@@ -39,8 +39,14 @@ graph TD
   * `tree` (`object`): MDAST root node.
 * **Returns:** `Array<{id: string, depth: number, title: string, startNodeIndex: number, endNodeIndex: number}>`
 
+### (Function) `buildSectionTree`
+* **Description:** Constructs a nested section hierarchy tree from MDAST root children.
+* **Arguments:**
+  * `tree` (`object`): MDAST root node.
+* **Returns:** `object`
+
 ### (Function) `generateMarkdown`
-* **Description:** Builds a target AST based on selected sections, repeat counts, and variable mappings, then serializes it to Markdown text.
+* **Description:** Builds a target AST based on selected sections, repeat configs, and variable mappings (preserving literal replacement patterns and ensuring selected descendants are rendered even if parent is unselected), then serializes it to Markdown text.
 * **Arguments:**
   * `rawMarkdown` (`string`): Original template markdown.
   * `selectedSectionIds` (`string[]`): Array of selected section identifiers.

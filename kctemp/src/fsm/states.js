@@ -63,10 +63,8 @@ export const stateHandlers = {
     const { sections, selectedSectionIds } = fsm.context;
     const repeatConfigs = {};
 
-    // 選択されたセクションの中から、リピート対象となりうるH3や主要見出しを検出
     const selectedSections = sections.filter(s => selectedSectionIds.includes(s.id));
-    
-    // H3見出し、または「編成」等の配下のセクションをリピート確認対象とする
+
     for (const sec of selectedSections) {
       if (sec.depth === 3 || sec.title.includes('{マス}') || sec.title.includes('編成')) {
         const count = await promptRepeatCount(sec.title, 1);
@@ -84,12 +82,10 @@ export const stateHandlers = {
     const { rawMarkdown, sections, selectedSectionIds, repeatConfigs } = fsm.context;
     console.log(`\n${messages.variable.header}`);
 
-    // 全体変数の抽出（En, (n), 第n艦隊, {人} など）
     const allVars = extractVariables(rawMarkdown);
     const globalVars = {};
     const repeatVars = {};
 
-    // リピートセクション（例: {マス}）と全体変数を分類
     const localPlaceholders = new Set(['{マス}']);
 
     console.log(`\n${messages.variable.globalHeader}`);
@@ -100,7 +96,6 @@ export const stateHandlers = {
       }
     }
 
-    // リピートセクションごとの個別変数入力
     for (const secId of selectedSectionIds) {
       const count = repeatConfigs[secId] || 1;
       const sec = sections.find(s => s.id === secId);
@@ -129,8 +124,7 @@ export const stateHandlers = {
   [STATES.RESOLVE_OUTPUT]: async (fsm) => {
     const config = await loadConfig();
     const { globalVariables } = fsm.context;
-    
-    // デフォルトファイル名の推測
+
     const area = globalVariables['En'] || 'E';
     const defaultName = `[1]${area}_output.md`;
 
@@ -159,7 +153,7 @@ export const stateHandlers = {
           fsm.context.targetDir = targetDir;
           resolved = true;
         } else if (action === 'manual') {
-          targetFileName = ''; // 再入力
+          targetFileName = '';
         } else {
           console.log(`\n${messages.app.exit}`);
           fsm.terminate();
@@ -182,24 +176,44 @@ export const stateHandlers = {
       targetDir
     } = fsm.context;
 
+    let generatedMd = '';
     try {
-      const generatedMd = generateMarkdown(
+      generatedMd = generateMarkdown(
         rawMarkdown,
         selectedSectionIds,
         repeatConfigs,
         globalVariables,
         repeatVariables
       );
-
-      await writeMarkdownFile(outputPath, generatedMd);
-      await saveConfig({ lastOutputDir: targetDir });
-
-      console.log(`\n${messages.output.success(outputPath)}\n`);
-      await fsm.transitionTo(STATES.COMPLETE);
-    } catch (err) {
-      console.error(`${messages.output.saveError}${err.message}`);
+    } catch (genErr) {
+      console.error(`Markdown生成エラー: ${genErr.message}`);
       fsm.terminate();
+      return;
     }
+
+    try {
+      await writeMarkdownFile(outputPath, generatedMd);
+    } catch (writeErr) {
+      if (writeErr.code === 'EEXIST') {
+        // 排他チェック競合時：重複解決フローに戻って再試行
+        console.warn(`\nファイルが直前に作成されました。重複解決を再実行します: ${outputPath}`);
+        await fsm.transitionTo(STATES.RESOLVE_OUTPUT);
+        return;
+      }
+      console.error(`${messages.output.saveError}${writeErr.message}`);
+      fsm.terminate();
+      return;
+    }
+
+    // config.jsonの保存は個別try-catchで非致命的に処理
+    try {
+      await saveConfig({ lastOutputDir: targetDir });
+    } catch (cfgErr) {
+      console.warn(`\n${messages.output.configWarning(cfgErr.message)}`);
+    }
+
+    console.log(`\n${messages.output.success(outputPath)}\n`);
+    await fsm.transitionTo(STATES.COMPLETE);
   },
 
   [STATES.COMPLETE]: async (fsm) => {

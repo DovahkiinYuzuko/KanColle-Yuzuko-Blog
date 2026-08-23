@@ -107,6 +107,15 @@ export function buildSectionTree(tree) {
   return root;
 }
 
+function hasSelectedDescendants(section, selectedSet) {
+  for (const child of section.children) {
+    if (selectedSet.has(child.id) || hasSelectedDescendants(child, selectedSet)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 function replaceTextInNode(node, variableMap) {
   if (!node || !variableMap) return;
 
@@ -114,15 +123,19 @@ function replaceTextInNode(node, variableMap) {
     if (typeof str !== 'string') return str;
     let result = str;
     for (const [key, value] of Object.entries(variableMap)) {
-      if (!value) continue;
+      if (value == null) continue;
+      const replacement = String(value);
       if (key === 'En') {
-        result = result.replace(/\bEn\b/g, value).replace(/En\{/g, `${value}{`).replace(/En(?=[^a-zA-Z0-9]|$)/g, value);
+        result = result
+          .replace(/\bEn\b/g, () => replacement)
+          .replace(/En\{/g, () => `${replacement}{`)
+          .replace(/En(?=[^a-zA-Z0-9]|$)/g, () => replacement);
       } else if (key === '(n)') {
-        result = result.replaceAll('(n)', value);
+        result = result.replaceAll('(n)', () => replacement);
       } else if (key === '第n艦隊') {
-        result = result.replaceAll('第n艦隊', value);
+        result = result.replaceAll('第n艦隊', () => replacement);
       } else {
-        result = result.replaceAll(key, value);
+        result = result.replaceAll(key, () => replacement);
       }
     }
     return result;
@@ -144,8 +157,11 @@ function replaceTextInNode(node, variableMap) {
 function renderSectionTree(section, selectedSet, repeatConfigs, globalVariables, repeatVariables, parentVars = {}) {
   const resultNodes = [];
 
-  // H1以外で選択されていないセクションは除外
-  if (section.depth > 1 && !selectedSet.has(section.id)) {
+  const isSelfSelected = section.depth <= 1 || selectedSet.has(section.id);
+  const isDescendantSelected = hasSelectedDescendants(section, selectedSet);
+
+  // 自身も子孫も選択されていない場合はスキップ
+  if (!isSelfSelected && !isDescendantSelected) {
     return resultNodes;
   }
 
@@ -161,12 +177,16 @@ function renderSectionTree(section, selectedSet, repeatConfigs, globalVariables,
       resultNodes.push(clonedHeading);
     }
 
-    for (const bodyNode of section.bodyNodes) {
-      const clonedBody = deepClone(bodyNode);
-      replaceTextInNode(clonedBody, currentVars);
-      resultNodes.push(clonedBody);
+    // 自身が選択されている場合は本文ノードも出力
+    if (isSelfSelected) {
+      for (const bodyNode of section.bodyNodes) {
+        const clonedBody = deepClone(bodyNode);
+        replaceTextInNode(clonedBody, currentVars);
+        resultNodes.push(clonedBody);
+      }
     }
 
+    // 子セクションを再帰レンダリング
     for (const childSec of section.children) {
       const childRendered = renderSectionTree(
         childSec,

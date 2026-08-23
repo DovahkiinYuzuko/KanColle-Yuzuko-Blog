@@ -13,7 +13,7 @@ related:
 # [JavaScript]fileService
 
 ## Overview
-Provides utility functions for file path resolution, checking file existence, generating sequential duplicate filenames, and writing output content.
+Provides utility functions for file path resolution, checking file existence, generating sequential duplicate filenames, and writing output content safely with race condition prevention.
 
 ## Dependencies & Impact Scope
 ### Dependency Diagram
@@ -47,7 +47,7 @@ graph TD
 * **Returns:** `Promise<void>`
 
 ### (Function) `writeMarkdownFile`
-* **Description:** Writes markdown content to the specified target path.
+* **Description:** Writes markdown content to the specified target path using exclusive write flag (`wx`) to prevent race condition overwrites.
 * **Arguments:**
   * `filePath` (`string`): Target file path.
   * `content` (`string`): Markdown string to write.

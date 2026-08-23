@@ -34,5 +34,5 @@ export async function ensureDirectoryExists(dirPath) {
 export async function writeMarkdownFile(filePath, content) {
   const dir = path.dirname(filePath);
   await ensureDirectoryExists(dir);
-  await fs.writeFile(filePath, content, 'utf-8');
+  await fs.writeFile(filePath, content, { encoding: 'utf-8', flag: 'wx' });
 }

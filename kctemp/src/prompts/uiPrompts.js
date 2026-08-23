@@ -1,4 +1,4 @@
-import { select, checkbox, input, confirm } from '@inquirer/prompts';
+import { select, checkbox, input } from '@inquirer/prompts';
 import { messages } from '../locales/ja.js';
 
 export async function promptTemplateSelection(templateList) {
@@ -29,17 +29,23 @@ export async function promptTemplateSelection(templateList) {
 }
 
 export async function promptSectionSelection(sections) {
-  const choices = sections
-    .filter(s => s.depth > 1) // H1以外を選択対象とする
-    .map(s => {
-      const indent = '  '.repeat(Math.max(0, s.depth - 2));
-      const prefix = s.depth === 2 ? '■ ' : s.depth === 3 ? '└─ ' : '    └─ ';
-      return {
-        name: `${indent}${prefix}${s.title}`,
-        value: s.id,
-        checked: true
-      };
-    });
+  const subHeadings = sections.filter(s => s.depth > 1);
+
+  // H1以外のサブセクションが存在しない場合のフォールバック
+  if (subHeadings.length === 0) {
+    console.log(`\n${messages.section.noSubSectionsInfo}`);
+    return sections.map(s => s.id);
+  }
+
+  const choices = subHeadings.map(s => {
+    const indent = '  '.repeat(Math.max(0, s.depth - 2));
+    const prefix = s.depth === 2 ? '■ ' : s.depth === 3 ? '└─ ' : '    └─ ';
+    return {
+      name: `${indent}${prefix}${s.title}`,
+      value: s.id,
+      checked: true
+    };
+  });
 
   const selected = await checkbox({
     message: messages.section.selectPrompt,
@@ -56,12 +62,11 @@ export async function promptRepeatCount(sectionTitle, defaultValue = 1) {
     message: messages.repeat.askRepeat(sectionTitle),
     default: String(defaultValue),
     validate: (val) => {
-      const num = parseInt(val, 10);
-      return !isNaN(num) && num >= 1 ? true : messages.repeat.invalidNumber;
+      return /^[1-9]\d*$/.test(val.trim()) ? true : messages.repeat.invalidNumber;
     }
   });
 
-  return parseInt(answer, 10);
+  return parseInt(answer.trim(), 10);
 }
 
 export async function promptVariableInput(varName, description, defaultValue = '') {
