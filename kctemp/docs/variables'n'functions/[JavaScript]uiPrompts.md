@@ -1,0 +1,71 @@
+---
+source_file: "kctemp/src/prompts/uiPrompts.js"
+language: "JavaScript"
+type: "Prompt"
+description: "Interactive CLI prompts built using @inquirer/prompts."
+tags: ["@Prompt"]
+related:
+  exports:
+    - "kctemp/src/fsm/states.js"
+  imports:
+    - "kctemp/src/locales/ja.js"
+---
+
+# [JavaScript]uiPrompts
+
+## Overview
+Wraps `@inquirer/prompts` methods (select, checkbox, input, confirm) using centralized messages from locale definitions.
+
+## Dependencies & Impact Scope
+### Dependency Diagram
+```mermaid
+graph TD
+    uiPrompts["[JavaScript]uiPrompts"] --> Inquirer["@inquirer/prompts"]
+    uiPrompts --> ja["ja"]
+```
+
+### Impact Scope
+* Directly affects terminal UI rendering and user interactions.
+
+## Exported Functions
+
+### (Function) `promptTemplateSelection`
+* **Description:** Displays list of available templates and direct file path option.
+* **Arguments:**
+  * `templateList` (`Array<{name: string, path: string}>`): List of available templates.
+* **Returns:** `Promise<string>`
+
+### (Function) `promptSectionSelection`
+* **Description:** Displays checkbox list of AST headings/sections.
+* **Arguments:**
+  * `sections` (`Array<{id: string, title: string, depth: number}>`): Section metadata.
+* **Returns:** `Promise<string[]>`
+
+### (Function) `promptRepeatCount`
+* **Description:** Prompts user for repeat count of a specific section.
+* **Arguments:**
+  * `sectionTitle` (`string`): Title of the section to repeat.
+  * `defaultValue` (`number`): Initial default count.
+* **Returns:** `Promise<number>`
+
+### (Function) `promptVariableInput`
+* **Description:** Prompts for single variable value replacement.
+* **Arguments:**
+  * `varName` (`string`): Name/key of the variable.
+  * `description` (`string`): Helpful hint or description.
+  * `defaultValue` (`string`): Default value if any.
+* **Returns:** `Promise<string>`
+
+### (Function) `promptOutputResolution`
+* **Description:** Prompts for output directory and filename.
+* **Arguments:**
+  * `defaultDir` (`string`): Pre-filled directory path.
+  * `defaultName` (`string`): Suggested base filename.
+* **Returns:** `Promise<{outputDir: string, fileName: string}>`
+
+### (Function) `promptDuplicateAction`
+* **Description:** Asks user how to handle existing file conflict.
+* **Arguments:**
+  * `conflictPath` (`string`): Conflicting file path.
+  * `autoName` (`string`): Candidate sequential filename.
+* **Returns:** `Promise<'auto' | 'manual' | 'cancel'>`

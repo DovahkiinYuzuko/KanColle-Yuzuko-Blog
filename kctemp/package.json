@@ -1,0 +1,30 @@
+{
+  "name": "kctemp",
+  "version": "0.1.0",
+  "description": "Markdown template based interactive CLI generator for KanColle event reports",
+  "type": "module",
+  "main": "src/index.js",
+  "bin": {
+    "kctemp": "./bin/kctemp.js"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node test-scripts/test.js"
+  },
+  "keywords": [
+    "markdown",
+    "ast",
+    "cli",
+    "template",
+    "kancolle"
+  ],
+  "author": "Yuzuko Underson",
+  "license": "MIT",
+  "dependencies": {
+    "@inquirer/prompts": "^7.3.2",
+    "remark-parse": "^11.0.0",
+    "remark-stringify": "^11.0.0",
+    "unified": "^11.0.5",
+    "unist-util-visit": "^5.0.0"
+  }
+}
