@@ -27,25 +27,25 @@ graph TD
 
 ## Exported Functions
 
-### (Function) `parseMarkdownToAst`
+### (Function) `parseMarkdownToAst` (L6-9)
 * **Description:** Parses a Markdown string into an MDAST syntax tree.
 * **Arguments:**
   * `markdownText` (`string`): Raw markdown string.
 * **Returns:** `object`
 
-### (Function) `extractSections`
-* **Description:** Parses MDAST root and extracts a hierarchical list of section metadata (headings and associated content nodes).
+### (Function) `extractSections` (L29-68)
+* **Description:** Parses MDAST root and extracts a flat array of heading metadata (headings and associated content node boundaries).
 * **Arguments:**
   * `tree` (`object`): MDAST root node.
 * **Returns:** `Array<{id: string, depth: number, title: string, startNodeIndex: number, endNodeIndex: number}>`
 
-### (Function) `buildSectionTree`
+### (Function) `buildSectionTree` (L70-108)
 * **Description:** Constructs a nested section hierarchy tree from MDAST root children.
 * **Arguments:**
   * `tree` (`object`): MDAST root node.
 * **Returns:** `object`
 
-### (Function) `generateMarkdown`
+### (Function) `generateMarkdown` (L205-232)
 * **Description:** Builds a target AST based on selected sections, repeat configs, and variable mappings (preserving literal replacement patterns and ensuring selected descendants are rendered even if parent is unselected, executing single-pass token replacement to avoid multi-pass replacement hazards), then serializes it to Markdown text.
 * **Arguments:**
   * `rawMarkdown` (`string`): Original template markdown.
@@ -54,4 +54,3 @@ graph TD
   * `globalVariables` (`object`): Key-value pairs for global replacements.
   * `repeatVariables` (`object`): Key-value pairs indexed by repeat block and index.
 * **Returns:** `string`
-

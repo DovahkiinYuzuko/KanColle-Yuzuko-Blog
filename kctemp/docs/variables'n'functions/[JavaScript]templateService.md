@@ -40,7 +40,7 @@ graph TD
 * **Returns:** `Promise<string>`
 
 ### (Function) `extractVariables`
-* **Description:** Extracts unique variable placeholder names from template text.
+* **Description:** Extracts unique variable placeholder names from template text (scanning domain patterns on text stripped of bracket placeholders to prevent overlapping matches).
 * **Arguments:**
   * `text` (`string`): Markdown text to analyze.
 * **Returns:** `string[]`

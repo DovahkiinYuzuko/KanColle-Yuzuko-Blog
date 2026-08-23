@@ -34,18 +34,24 @@ export function extractVariables(text) {
     }
   }
 
+  // 波括弧プレースホルダーを除去したテキスト（{En}等の波括弧内キーワードを誤検知しないため）
+  const textWithoutBracketPlaceholders = text.replace(/\{[^{}\r\n]+\}/g, '');
+
   // 艦これ特有パターン: En
-  if (/\bEn\b/.test(text) || /#.*En/.test(text) || /En\{/.test(text)) {
+  if (
+    /\bEn\b/.test(textWithoutBracketPlaceholders) ||
+    /#.*En/.test(textWithoutBracketPlaceholders)
+  ) {
     vars.add('En');
   }
 
   // 艦これ特有パターン: (n)
-  if (/\(n\)/.test(text)) {
+  if (/\(n\)/.test(textWithoutBracketPlaceholders)) {
     vars.add('(n)');
   }
 
   // 艦これ特有パターン: 第n艦隊
-  if (/第n艦隊/.test(text)) {
+  if (/第n艦隊/.test(textWithoutBracketPlaceholders)) {
     vars.add('第n艦隊');
   }
 
