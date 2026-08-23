@@ -119,9 +119,9 @@ function hasSelectedDescendants(section, selectedSet) {
 function replaceTextInNode(node, variableMap) {
   if (!node || !variableMap || Object.keys(variableMap).length === 0) return;
 
-  const staticPatterns = ['\\{[^{}\\r\\n]+\\}', '\\bEn(?=[^a-zA-Z0-9]|$)', '\\(n\\)', '第n艦隊'];
+  const staticPatterns = ['\\{[^{}\\r\\n]+\\}', '\\bEn(?=[^a-zA-Z0-9]|$)', '\\(n\\)'];
   const customKeys = Object.keys(variableMap)
-    .filter(k => !['En', '(n)', '第n艦隊'].includes(k) && !k.startsWith('{'))
+    .filter(k => !['En', '(n)'].includes(k) && !k.startsWith('{'))
     .map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
 
   const allPatterns = [...staticPatterns, ...customKeys].filter(Boolean);
@@ -225,7 +225,9 @@ export function generateMarkdown(rawMarkdown, selectedSectionIds, repeatConfigs,
     emphasis: '*',
     strong: '*',
     fences: true,
-    listItemIndent: 'one'
+    listItemIndent: 'one',
+    rule: '-',
+    ruleSpaces: false
   });
 
   return processor.stringify(newTree);

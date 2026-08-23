@@ -50,10 +50,5 @@ export function extractVariables(text) {
     vars.add('(n)');
   }
 
-  // 艦これ特有パターン: 第n艦隊
-  if (/第n艦隊/.test(textWithoutBracketPlaceholders)) {
-    vars.add('第n艦隊');
-  }
-
   return Array.from(vars);
 }

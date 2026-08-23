@@ -29,26 +29,26 @@ graph TD
 
 ## Exported Functions
 
-### (Function) `promptTemplateSelection` (L4-29)
+### (Function) `promptTemplateSelection` (L4-30)
 * **Description:** Displays list of available templates and direct file path option.
 * **Arguments:**
   * `templateList` (`Array<{name: string, path: string}>`): List of available templates.
 * **Returns:** `Promise<string>`
 
-### (Function) `promptSectionSelection` (L31-58)
+### (Function) `promptSectionSelection` (L32-61)
 * **Description:** Displays checkbox list of AST headings/sections with fallback for templates with no sub-headings.
 * **Arguments:**
   * `sections` (`Array<{id: string, title: string, depth: number}>`): Section metadata.
 * **Returns:** `Promise<string[]>`
 
-### (Function) `promptRepeatCount` (L60-70)
+### (Function) `promptRepeatCount` (L63-73)
 * **Description:** Prompts user for repeat count of a specific section with strict positive integer validation.
 * **Arguments:**
   * `sectionTitle` (`string`): Title of the section to repeat.
   * `defaultValue` (`number`): Initial default count.
 * **Returns:** `Promise<number>`
 
-### (Function) `promptVariableInput` (L72-80)
+### (Function) `promptVariableInput` (L75-83)
 * **Description:** Prompts for single variable value replacement.
 * **Arguments:**
   * `varName` (`string`): Name/key of the variable.
@@ -56,14 +56,14 @@ graph TD
   * `defaultValue` (`string`): Default value if any.
 * **Returns:** `Promise<string>`
 
-### (Function) `promptOutputResolution` (L82-103)
+### (Function) `promptOutputResolution` (L85-106)
 * **Description:** Prompts for output directory and filename.
 * **Arguments:**
   * `defaultDir` (`string`): Pre-filled directory path.
   * `defaultName` (`string`): Suggested base filename.
 * **Returns:** `Promise<{outputDir: string, fileName: string}>`
 
-### (Function) `promptDuplicateAction` (L105-127)
+### (Function) `promptDuplicateAction` (L108-131)
 * **Description:** Asks user how to handle existing file conflict.
 * **Arguments:**
   * `conflictPath` (`string`): Conflicting file path.

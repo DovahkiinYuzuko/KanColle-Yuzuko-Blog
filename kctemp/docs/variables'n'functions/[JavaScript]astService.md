@@ -45,7 +45,7 @@ graph TD
   * `tree` (`object`): MDAST root node.
 * **Returns:** `object`
 
-### (Function) `generateMarkdown` (L205-232)
+### (Function) `generateMarkdown` (L205-234)
 * **Description:** Builds a target AST based on selected sections, repeat configs, and variable mappings (preserving literal replacement patterns and ensuring selected descendants are rendered even if parent is unselected, executing single-pass token replacement to avoid multi-pass replacement hazards), then serializes it to Markdown text.
 * **Arguments:**
   * `rawMarkdown` (`string`): Original template markdown.

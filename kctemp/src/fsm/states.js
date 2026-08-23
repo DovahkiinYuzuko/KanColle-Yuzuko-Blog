@@ -66,7 +66,7 @@ export const stateHandlers = {
     const selectedSections = sections.filter(s => selectedSectionIds.includes(s.id));
 
     for (const sec of selectedSections) {
-      if (sec.depth === 3 || sec.title.includes('{マス}') || sec.title.includes('編成')) {
+      if (sec.title.includes('{マス}')) {
         const count = await promptRepeatCount(sec.title, 1);
         repeatConfigs[sec.id] = count;
       } else {
@@ -101,7 +101,7 @@ export const stateHandlers = {
       const sec = sections.find(s => s.id === secId);
       if (!sec) continue;
 
-      if (count > 1 || sec.title.includes('{マス}')) {
+      if (sec.title.includes('{マス}')) {
         repeatVars[secId] = [];
         for (let r = 0; r < count; r++) {
           console.log(`\n${messages.variable.repeatHeader(sec.title, r)}`);

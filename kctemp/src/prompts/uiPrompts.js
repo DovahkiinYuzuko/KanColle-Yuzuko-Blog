@@ -14,7 +14,8 @@ export async function promptTemplateSelection(templateList) {
 
   const selected = await select({
     message: messages.template.selectPrompt,
-    choices
+    choices,
+    loop: false
   });
 
   if (selected === '__CUSTOM__') {
@@ -51,6 +52,8 @@ export async function promptSectionSelection(sections) {
     message: messages.section.selectPrompt,
     instructions: messages.section.selectInstruction,
     choices,
+    pageSize: 15,
+    loop: false,
     validate: (items) => items.length > 0 ? true : messages.section.noSectionSelected
   });
 
@@ -107,6 +110,7 @@ export async function promptDuplicateAction(conflictPath, autoCandidateName) {
 
   const choice = await select({
     message: messages.output.duplicateActionPrompt,
+    loop: false,
     choices: [
       {
         name: messages.output.duplicateActions.autoRename(autoCandidateName),
