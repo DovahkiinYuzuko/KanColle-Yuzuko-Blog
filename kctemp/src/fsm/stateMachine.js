@@ -2,30 +2,46 @@ export class StateMachine {
   constructor(states, initialContext = {}) {
     this.states = states;
     this.currentState = null;
+    this.nextState = null;
     this.context = initialContext;
     this.isTerminated = false;
+    this.isRunning = false;
   }
 
   async transitionTo(nextState) {
     if (this.isTerminated) return;
-    this.currentState = nextState;
-    const handler = this.states[nextState];
-    if (!handler) {
+    if (!this.states[nextState]) {
       throw new Error(`Unknown state: ${nextState}`);
     }
-    await handler(this);
+    this.nextState = nextState;
   }
 
   async run(initialState) {
-    this.currentState = initialState;
-    const handler = this.states[initialState];
-    if (!handler) {
+    if (!this.states[initialState]) {
       throw new Error(`Initial state not found: ${initialState}`);
     }
-    await handler(this);
+
+    this.nextState = initialState;
+    this.isRunning = true;
+
+    while (!this.isTerminated && this.nextState) {
+      this.currentState = this.nextState;
+      this.nextState = null;
+
+      const handler = this.states[this.currentState];
+      if (!handler) {
+        throw new Error(`State handler not found: ${this.currentState}`);
+      }
+
+      await handler(this);
+    }
+
+    this.isRunning = false;
   }
 
   terminate() {
     this.isTerminated = true;
+    this.nextState = null;
   }
 }
+

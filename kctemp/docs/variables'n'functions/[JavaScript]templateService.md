@@ -13,7 +13,7 @@ related:
 # [JavaScript]templateService
 
 ## Overview
-Scans template directories, loads Markdown template files, and extracts variable placeholders (both bracketed `{マス}` and domain-specific patterns like `En`, `第n艦隊`).
+Scans template directories, loads Markdown template files, and extracts unique variable placeholders (including bracketed expressions `{マス}` and domain-specific patterns `En`, `(n)`, `第n艦隊`) cleanly.
 
 ## Dependencies & Impact Scope
 ### Dependency Diagram
@@ -44,3 +44,4 @@ graph TD
 * **Arguments:**
   * `text` (`string`): Markdown text to analyze.
 * **Returns:** `string[]`
+

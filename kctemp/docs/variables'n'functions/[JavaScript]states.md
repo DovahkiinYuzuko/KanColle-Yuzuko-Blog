@@ -19,7 +19,7 @@ related:
 # [JavaScript]states
 
 ## Overview
-Declares all state handler functions for the kctemp wizard (Template Selection, Section Selection, Repeat Setup, Variable Inputs, Output Path/Duplicate Resolution with EEXIST recovery, and Generation with isolated config error reporting).
+Declares all state handler functions for the kctemp wizard (Template Selection, Section Selection, Repeat Setup, Variable Inputs, Output Path/Duplicate Resolution with EEXIST recovery, File Generation, and Completion).
 
 ## Dependencies & Impact Scope
 ### Dependency Diagram
@@ -45,3 +45,4 @@ graph TD
 ### (Variable) `stateHandlers`
 * **Type:** `object`
 * **Description:** Map of state names to their async execution handlers taking the FSM context.
+

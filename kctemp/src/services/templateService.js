@@ -35,7 +35,7 @@ export function extractVariables(text) {
   }
 
   // 艦これ特有パターン: En
-  if (/\bEn\b/.test(text) || /#.*En/.test(text) || /En\{/.test(text) || /En\b/.test(text)) {
+  if (/\bEn\b/.test(text) || /#.*En/.test(text) || /En\{/.test(text)) {
     vars.add('En');
   }
 

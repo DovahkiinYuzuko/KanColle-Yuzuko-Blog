@@ -117,28 +117,27 @@ function hasSelectedDescendants(section, selectedSet) {
 }
 
 function replaceTextInNode(node, variableMap) {
-  if (!node || !variableMap) return;
+  if (!node || !variableMap || Object.keys(variableMap).length === 0) return;
+
+  const staticPatterns = ['\\{[^{}\\r\\n]+\\}', '\\bEn(?=[^a-zA-Z0-9]|$)', '\\(n\\)', '第n艦隊'];
+  const customKeys = Object.keys(variableMap)
+    .filter(k => !['En', '(n)', '第n艦隊'].includes(k) && !k.startsWith('{'))
+    .map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+
+  const allPatterns = [...staticPatterns, ...customKeys].filter(Boolean);
+  const tokenRegex = new RegExp(allPatterns.join('|'), 'g');
 
   function replaceString(str) {
     if (typeof str !== 'string') return str;
-    let result = str;
-    for (const [key, value] of Object.entries(variableMap)) {
-      if (value == null) continue;
-      const replacement = String(value);
-      if (key === 'En') {
-        result = result
-          .replace(/\bEn\b/g, () => replacement)
-          .replace(/En\{/g, () => `${replacement}{`)
-          .replace(/En(?=[^a-zA-Z0-9]|$)/g, () => replacement);
-      } else if (key === '(n)') {
-        result = result.replaceAll('(n)', () => replacement);
-      } else if (key === '第n艦隊') {
-        result = result.replaceAll('第n艦隊', () => replacement);
-      } else {
-        result = result.replaceAll(key, () => replacement);
+    return str.replace(tokenRegex, (match) => {
+      if (match === 'En') {
+        return variableMap['En'] != null ? String(variableMap['En']) : match;
       }
-    }
-    return result;
+      if (match in variableMap && variableMap[match] != null) {
+        return String(variableMap[match]);
+      }
+      return match;
+    });
   }
 
   visit(node, (child) => {
