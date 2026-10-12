@@ -62,3 +62,13 @@
 !kcyaml/src/*.ts
 !kcyaml/dist/
 !kcyaml/dist/*.js
+# .gitignores/tsujo_kaiiki.gitignore
+!tsujo_kaiiki/
+# .gitignores/通常/4_seiho.gitignore
+!tsujo_kaiiki/4_seiho/
+!tsujo_kaiiki/4_seiho/docs/
+!tsujo_kaiiki/4_seiho/assets/
+
+# 4-5
+!tsujo_kaiiki/4_seiho/docs/4-5.md
+!tsujo_kaiiki/4_seiho/assets/4-5.png
